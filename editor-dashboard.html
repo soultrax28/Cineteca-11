@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Editor - Cineteca</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; background: #f9f7f4; color: #222; }
+        .editor-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); color: white; padding: 1.5rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.3); }
+        .sidebar-header { padding: 1.2rem; border-bottom: 2px solid rgba(255,255,255,0.2); text-align: center; }
+        .user-role { font-size: 0.78rem; background: rgba(255,255,255,0.2); padding: 0.4rem; border-radius: 5px; text-align: center; }
+        .sidebar-menu a { display: block; padding: 0.85rem 1.2rem; color: rgba(255,255,255,0.9); text-decoration: none; transition: all 0.3s; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: rgba(255,255,255,0.1); color: white; }
+        .main-content { flex: 1; margin-left: 260px; padding: 1rem; }
+        .header { background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+        .content-section { background: white; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 1.2rem; display: none; }
+        .content-section.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f0ebe5; }
+        .btn { padding: 7px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 2px; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #48bb78; color: white; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); color: white; padding: 1.2rem; border-radius: 10px; text-align: center; min-height: 120px; }
+        .stat-card h3 { font-size: 2rem; margin: 0 0 6px 0; }
+        .stat-card p { font-size: 0.95rem; }
+        .info-box { background: #e6fffa; border-left: 5px solid #48bb78; padding: 1rem; border-radius: 8px; margin: 0.9rem 0; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .seat { width: 34px; height: 34px; margin: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 4px; font-weight: bold; color: white; }
+        .seat.available { background: #48bb78; }
+        .seat.taken { background: #f56565; }
+        .movie-img { 
+            width: 60px; 
+            height: 80px; 
+            object-fit: cover; 
+            border-radius: 4px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🎞️ Cineteca</h2>
+                <div class="user-role"><span id="userRoleDisplay">Editor</span></div>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" class="menu-link active" data-section="dashboard">📊 Dashboard</a></li>
+                <li><a href="#" class="menu-link" data-section="peliculas">🎬 Películas</a></li>
+                <li><a href="#" class="menu-link" data-section="salas">🎭 Salas</a></li>
+                <li><a href="#" class="menu-link" data-section="funciones">🕐 Funciones</a></li>
+                <li><a href="#" class="menu-link" data-section="disponibilidad">💺 Disponibilidad</a></li>
+                <li><a href="#" class="menu-link" data-section="operativa">📋 Información Operativa</a></li>
+                <li><a href="mi-billetera.html">💳 Mi Billetera</a></li>
+                <li><a href="index.html" style="color:#d4af37; font-weight:bold;">🏠 Inicio</a></li>
+                <li><a href="#" onclick="logout()">🚪 Cerrar Sesión</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Dashboard Editor</h1>
+                <button onclick="logout()">Cerrar Sesión</button>
+            </div>
+
+            <!-- DASHBOARD -->
+            <section id="dashboard" class="content-section active">
+                <h2>Resumen General</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="stat-card"><h3 id="totalPeliculas">0</h3><p>Películas</p></div>
+                    <div class="stat-card"><h3 id="totalSalas">0</h3><p>Salas</p></div>
+                    <div class="stat-card"><h3 id="totalFunciones">0</h3><p>Funciones</p></div>
+                    <div class="stat-card"><h3 id="totalBoletos">0</h3><p>Boletos Vendidos</p></div>
+                    <div class="stat-card"><h3 id="totalIngresos">$0.00</h3><p>Ingresos Totales</p></div>
+                    <div class="stat-card"><h3 id="ocupacionPromedio">0%</h3><p>Ocupación Promedio</p></div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:0.8rem; margin-top:1rem;">
+                    <div style="background:#f5fbf9; padding:1rem; border-radius:12px; border:1px solid #d6efe7; box-shadow:0 3px 10px rgba(35,97,80,0.06);">
+                        <h3 style="margin-top:0;color:#1f4f3f; font-size:1rem;">Películas con más ventas</h3>
+                        <div id="topMoviesChart" style="margin-top:0.75rem;"></div>
+                    </div>
+                    <div style="background:#f5fbf9; padding:1rem; border-radius:12px; border:1px solid #d6efe7; box-shadow:0 3px 10px rgba(35,97,80,0.06);">
+                        <h3 style="margin-top:0;color:#1f4f3f; font-size:1rem;">Funciones más populares</h3>
+                        <div id="topFunctionsChart" style="margin-top:0.75rem;"></div>
+                    </div>
+                    <div style="background:#f5fbf9; padding:1rem; border-radius:12px; border:1px solid #d6efe7; box-shadow:0 3px 10px rgba(35,97,80,0.06);">
+                        <h3 style="margin-top:0;color:#1f4f3f; font-size:1rem;">Distribución de Ventas</h3>
+                        <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+                            <div id="dashboardPieChart" style="width:130px; height:130px; border-radius:50%;"></div>
+                            <div id="dashboardPieLegend" style="flex:1; font-size:0.85rem;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:0.8rem; margin-top:1rem;">
+                    <div style="background:#f5fbf9; padding:1rem; border-radius:12px; border:1px solid #d6efe7; box-shadow:0 3px 10px rgba(35,97,80,0.06);">
+                        <h3 style="margin-top:0;color:#1f4f3f; font-size:1rem;">Top Películas por Ventas</h3>
+                        <div id="dashboardBarChart" style="margin-top:0.75rem;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Películas con imágenes -->
+            <section id="peliculas" class="content-section">
+                <h2>Gestión de Películas</h2>
+                <button class="btn btn-primary" onclick="newPelicula()">+ Nueva Película</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Título</th>
+                            
+                            <th>Género</th>
+                            <th>Duración</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="peliculasTable"></tbody>
+                </table>
+            </section>
+
+            <!-- Salas -->
+            <section id="salas" class="content-section">
+                <h2>Gestión de Salas</h2>
+                <button class="btn btn-primary" onclick="newSala()">+ Nueva Sala</button>
+                <table><thead><tr><th>Nombre</th><th>Capacidad</th><th>Tecnología</th><th>Acciones</th></tr></thead>
+                    <tbody id="salasTable"></tbody>
+                </table>
+            </section>
+
+            <!-- Funciones (Solo crear y eliminar) -->
+            <section id="funciones" class="content-section">
+                <h2>Programar Funciones</h2>
+                <button class="btn btn-primary" onclick="newFuncion()">+ Nueva Función</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Película</th>
+                            <th>Sala</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="funcionesTable"></tbody>
+                </table>
+            </section>
+
+            <!-- Disponibilidad -->
+                        <!-- Disponibilidad -->
+            <section id="disponibilidad" class="content-section">
+                <h2>Consultar Disponibilidad de Asientos</h2>
+                <div class="form-group">
+                    <label>Selecciona una Película:</label>
+                    <select id="availMovie" onchange="loadFunctionsForMovie()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Selecciona una Función:</label>
+                    <select id="availFunction" onchange="loadSeatMap()"></select>
+                </div>
+
+                <h3>Mapa de Asientos</h3>
+                <div style="text-align:center; margin:15px 0;">
+                    <span style="color:#48bb78;">● Disponible</span> | 
+                    <span style="color:#f56565;">● Vendido</span>
+                </div>
+                <div id="seatMap" style="display:grid; grid-template-columns:repeat(10, 38px); gap:6px; margin:20px auto; max-width:450px; justify-content:center;"></div>
+                
+                <div style="background:#f0f8f0; padding:15px; border-radius:8px;">
+                    <h4>Resumen</h4>
+                    <p id="summary">Total: <strong>80</strong> | Vendidos: <strong id="soldCount">0</strong> | Disponibles: <strong id="availableCount">80</strong></p>
+                </div>
+            </section>
+
+            <!-- Información Operativa (Simple y estable) -->
+            <section id="operativa" class="content-section">
+                <h2>Información Operativa</h2>
+                
+                <div class="info-box">
+                    <h3>🕒 Horarios de Operación</h3>
+                    <ul>
+                        <li><strong>Lunes a Viernes:</strong> 15:00 - 23:00</li>
+                        <li><strong>Sábados:</strong> 13:00 - 24:00</li>
+                        <li><strong>Domingos:</strong> 13:00 - 23:00</li>
+                    </ul>
+                </div>
+
+            
+
+                <div class="info-box">
+                    <h3>🎫 Precios de Entradas</h3>
+                    <ul>
+                        <li><strong>Adulto:</strong> $15.00</li>
+                        <li><strong>Estudiante / Adulto Mayor:</strong> $12.00</li>
+                        <li><strong>Niño:</strong> $10.00</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <h3>📞 Contactos Importantes</h3>
+                    <ul>
+                        <li><strong>Administración:</strong> (555) 123-4567</li>
+                        <li><strong>Soporte Técnico:</strong> (555) 234-5678</li>
+                        <li><strong>Email:</strong> info@cineteca.org</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modales -->
+    <div id="peliculaModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalPeliculaTitle">Nueva Película</h2>
+            <input type="hidden" id="editPeliculaId">
+            <div class="form-group"><label>Título</label><input type="text" id="movieTitle" required></div>
+            <div class="form-group"><input type="number" id="movieYear" required></div>
+            <div class="form-group"><label>Género</label><input type="text" id="movieGenre" required></div>
+            <div class="form-group"><label>Duración (min)</label><input type="number" id="movieDuration" required></div>
+            <div class="form-group"><label>Imagen</label><input type="file" id="movieImage" accept="image/*"></div>
+            <div id="imagePreview" style="margin:10px 0;"></div>
+            <button class="btn btn-primary" onclick="savePelicula()">Guardar Película</button>
+            <button class="btn btn-secondary" onclick="closeModal('peliculaModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="salaModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalSalaTitle">Nueva Sala</h2>
+            <input type="hidden" id="editSalaId">
+            <div class="form-group"><label>Nombre</label><input type="text" id="salaName" required></div>
+            <div class="form-group"><label>Capacidad</label><input type="number" id="salaCapacity" required></div>
+            <div class="form-group"><label>Tecnología</label><input type="text" id="salaTech" required></div>
+            <button class="btn btn-primary" onclick="saveSala()">Guardar</button>
+            <button class="btn btn-secondary" onclick="closeModal('salaModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="funcionModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalFuncionTitle">Nueva Función</h2>
+            <div class="form-group"><label>Película</label><select id="funcionPelicula"></select></div>
+            <div class="form-group"><label>Sala</label><select id="funcionSala"></select></div>
+            <div class="form-group"><label>Fecha</label><input type="date" id="funcionFecha" required></div>
+            <div class="form-group"><label>Hora</label><input type="time" id="funcionHora" required></div>
+            <div class="form-group"><label>Precio ($)</label><input type="number" step="0.01" id="funcionPrecio" value="15" required></div>
+            <button class="btn btn-primary" onclick="saveFuncion()">Guardar</button>
+            <button class="btn btn-secondary" onclick="closeModal('funcionModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Navegación
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.getElementById(link.dataset.section).classList.add('active');
+            });
+        });
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // Dashboard Stats
+        async function loadDashboardStats() {
+            try {
+                const [p, s, f] = await Promise.all([
+                    fetch(`${API_URL}/api/peliculas`),
+                    fetch(`${API_URL}/api/salas`),
+                    fetch(`${API_URL}/api/funciones`)
+                ]);
+                document.getElementById('totalPeliculas').textContent = (await p.json()).length;
+                document.getElementById('totalSalas').textContent = (await s.json()).length;
+                const funciones = await f.json();
+                const totalFunciones = funciones.length;
+                document.getElementById('totalFunciones').textContent = totalFunciones;
+                
+                await loadDashboardSalesSummary(totalFunciones);
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadDashboardSalesSummary(totalFunciones = 0) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/reportes/ventas`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const totalBoletos = Number(data?.resumen?.boletosVendidos || 0);
+                const totalIngresos = Number(data?.resumen?.ingresosTotales || 0);
+                const ocupacion = totalFunciones > 0 ? Math.round((totalBoletos / (totalFunciones * 80)) * 100) : 0;
+
+                document.getElementById('totalBoletos').textContent = totalBoletos.toLocaleString('es-MX');
+                document.getElementById('totalIngresos').textContent = `$${formatMoney(totalIngresos)}`;
+                document.getElementById('ocupacionPromedio').textContent = `${ocupacion}%`;
+
+                renderTopMoviesChart(Array.isArray(data?.porPelicula) ? data.porPelicula : [], totalBoletos);
+                renderTopFunctionsChart(Array.isArray(data?.porFuncion) ? data.porFuncion : []);
+                renderDashboardPieChart(Array.isArray(data?.porPelicula) ? data.porPelicula : [], totalBoletos);
+                renderDashboardBarChart(Array.isArray(data?.porPelicula) ? data.porPelicula : []);
+            } catch (e) {
+                console.error('Error cargando métricas de ventas', e);
+            }
+        }
+
+        function renderTopMoviesChart(porPelicula, totalBoletos) {
+            const container = document.getElementById('topMoviesChart');
+            if (!container) return;
+
+            if (!porPelicula.length) {
+                container.innerHTML = '<p style="color:#777;">No hay ventas registradas para mostrar.</p>';
+                return;
+            }
+
+            const topMovies = porPelicula.slice(0, 3);
+            const maxCantidad = Math.max(...topMovies.map(row => Number(row.boletosVendidos || 0)), 1);
+
+            container.innerHTML = topMovies.map(row => {
+                const width = Math.round((Number(row.boletosVendidos || 0) / maxCantidad) * 100);
+                return `
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px;">
+                            <span>${row.pelicula}</span>
+                            <span>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')} boletos</span>
+                        </div>
+                        <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:14px;">
+                            <div style="width:${width}%; background:#38a169; height:100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTopFunctionsChart(porFuncion) {
+            const container = document.getElementById('topFunctionsChart');
+            if (!container) return;
+
+            if (!porFuncion.length) {
+                container.innerHTML = '<p style="color:#777;">No hay funciones con ventas registradas.</p>';
+                return;
+            }
+
+            const topFuncs = porFuncion.slice(0, 3);
+            const maxVentas = Math.max(...topFuncs.map(row => Number(row.boletosVendidos || 0)), 1);
+
+            container.innerHTML = topFuncs.map(row => {
+                const width = Math.round((Number(row.boletosVendidos || 0) / maxVentas) * 100);
+                return `
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px;">
+                            <span>${row.pelicula} ${row.fecha} ${row.hora}</span>
+                            <span>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</span>
+                        </div>
+                        <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:14px;">
+                            <div style="width:${width}%; background:#38a169; height:100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDashboardPieChart(porPelicula, totalBoletos) {
+            const chartEl = document.getElementById('dashboardPieChart');
+            const legendEl = document.getElementById('dashboardPieLegend');
+            if (!chartEl || !legendEl) return;
+
+            if (!porPelicula.length || totalBoletos === 0) {
+                chartEl.innerHTML = '<p style="color:#777; text-align:center; font-size:12px;">Sin datos</p>';
+                legendEl.innerHTML = '';
+                return;
+            }
+
+            const topMovies = porPelicula.slice(0, 5);
+            const colors = ['#38a169', '#3182ce', '#e53e3e', '#d69e2e', '#805ad5'];
+
+            let currentAngle = 0;
+            const gradients = [];
+            const legendItems = [];
+
+            topMovies.forEach((movie, idx) => {
+                const boletos = Number(movie.boletosVendidos || 0);
+                const percentage = (boletos / totalBoletos) * 100;
+                const angle = (percentage / 100) * 360;
+
+                if (percentage > 0) {
+                    gradients.push(`${colors[idx]} ${currentAngle}deg ${currentAngle + angle}deg`);
+                    legendItems.push(`
+                        <div style="display:flex; align-items:center; margin-bottom:6px;">
+                            <div style="width:10px; height:10px; background:${colors[idx]}; border-radius:50%; margin-right:6px;"></div>
+                            <span style="font-size:11px; color:#555;">${movie.pelicula} (${percentage.toFixed(1)}%)</span>
+                        </div>
+                    `);
+                }
+                currentAngle += angle;
+            });
+
+            chartEl.style.background = `conic-gradient(${gradients.join(', ')})`;
+            legendEl.innerHTML = legendItems.join('');
+        }
+
+        function renderDashboardBarChart(porPelicula) {
+            const container = document.getElementById('dashboardBarChart');
+            if (!container) return;
+
+            if (!porPelicula.length) {
+                container.innerHTML = '<p style="color:#777;">No hay ventas registradas para mostrar.</p>';
+                return;
+            }
+
+            const topMovies = porPelicula.slice(0, 5);
+            const maxBoletos = Math.max(...topMovies.map(row => Number(row.boletosVendidos || 0)), 1);
+
+            container.innerHTML = topMovies.map((movie, idx) => {
+                const boletos = Number(movie.boletosVendidos || 0);
+                const width = Math.round((boletos / maxBoletos) * 100);
+                const colors = ['#38a169', '#3182ce', '#e53e3e', '#d69e2e', '#805ad5'];
+
+                return `
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px; font-size:13px;">
+                            <span>${movie.pelicula}</span>
+                            <span>${boletos.toLocaleString('es-MX')} boletos</span>
+                        </div>
+                        <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:18px;">
+                            <div style="width:${width}%; background:${colors[idx]}; height:100%; transition:width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatMoney(value) {
+            const num = Number(value || 0);
+            return num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Películas con imágenes
+        let editPeliculaId = null;
+        async function loadPeliculas() {
+            const res = await fetch(`${API_URL}/api/peliculas`);
+            const data = await res.json();
+            let html = '';
+            data.forEach(p => {
+                const imgUrl = p.imagen_url || '/imagenes/default.jpg';
+                html += `
+                    <tr>
+                        <td><img src="${imgUrl}" class="movie-img" onerror="this.src='/imagenes/default.jpg'"></td>
+                        <td>${p.Titulo}</td>
+                        
+                        <td>${p.Genero || 'N/A'}</td>
+                        <td>${p.Duracion || 'N/A'} min</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editPelicula(${p.id})">Editar</button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('peliculasTable').innerHTML = html;
+        }
+
+        function newPelicula() {
+            editPeliculaId = null;
+            document.getElementById('modalPeliculaTitle').textContent = 'Nueva Película';
+            document.getElementById('peliculaModal').querySelectorAll('input').forEach(i => i.value = '');
+            document.getElementById('imagePreview').innerHTML = '';
+            openModal('peliculaModal');
+        }
+
+        async function editPelicula(id) {
+            editPeliculaId = id;
+            document.getElementById('modalPeliculaTitle').textContent = 'Editar Película';
+            const res = await fetch(`${API_URL}/api/peliculas`);
+            const pelis = await res.json();
+            const p = pelis.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('movieTitle').value = p.Titulo;
+            
+            document.getElementById('movieGenre').value = p.Genero || '';
+            document.getElementById('movieDuration').value = p.Duracion || '';
+            document.getElementById('imagePreview').innerHTML = p.imagen_url 
+                ? `<img src="${p.imagen_url}" style="max-width:200px;border-radius:6px;">` 
+                : '';
+            openModal('peliculaModal');
+        }
+
+        async function savePelicula() {
+            const formData = new FormData();
+            formData.append('Titulo', document.getElementById('movieTitle').value);
+            
+            formData.append('Genero', document.getElementById('movieGenre').value);
+            formData.append('Duracion', document.getElementById('movieDuration').value);
+
+            const imageFile = document.getElementById('movieImage').files[0];
+            if (imageFile) formData.append('imagen', imageFile);
+
+            const method = editPeliculaId ? 'PUT' : 'POST';
+            const url = editPeliculaId ? `${API_URL}/api/peliculas/${editPeliculaId}` : `${API_URL}/api/peliculas`;
+
+            const res = await fetch(url, { method, body: formData });
+            if (res.ok) {
+                alert(editPeliculaId ? 'Película actualizada correctamente' : 'Película creada correctamente');
+                closeModal('peliculaModal');
+                loadPeliculas();
+                loadDashboardStats();
+            } else {
+                alert('Error al guardar película');
+            }
+        }
+
+        // Salas
+        let editSalaId = null;
+        async function loadSalas() {
+            const res = await fetch(`${API_URL}/api/salas`);
+            const data = await res.json();
+            document.getElementById('salasTable').innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.nombre}</td>
+                    <td>${s.capacidad}</td>
+                    <td>${s.tecnologia}</td>
+                    <td><button class="btn btn-secondary" onclick="editSala(${s.id})">Editar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function newSala() {
+            editSalaId = null;
+            document.getElementById('modalSalaTitle').textContent = 'Nueva Sala';
+            openModal('salaModal');
+        }
+
+        async function editSala(id) {
+            editSalaId = id;
+            document.getElementById('modalSalaTitle').textContent = 'Editar Sala';
+            const res = await fetch(`${API_URL}/api/salas`);
+            const salas = await res.json();
+            const s = salas.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('salaName').value = s.nombre;
+            document.getElementById('salaCapacity').value = s.capacidad;
+            document.getElementById('salaTech').value = s.tecnologia;
+            openModal('salaModal');
+        }
+
+        async function saveSala() {
+            const data = {
+                nombre: document.getElementById('salaName').value,
+                capacidad: parseInt(document.getElementById('salaCapacity').value),
+                tecnologia: document.getElementById('salaTech').value
+            };
+            const method = editSalaId ? 'PUT' : 'POST';
+            const url = editSalaId ? `${API_URL}/api/salas/${editSalaId}` : `${API_URL}/api/salas`;
+            await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            alert('Sala guardada');
+            closeModal('salaModal');
+            loadSalas();
+            loadDashboardStats();
+        }
+
+        // Funciones (Solo crear y eliminar)
+        async function loadFunciones() {
+            const res = await fetch(`${API_URL}/api/funciones`);
+            const data = await res.json();
+            let html = '';
+            data.forEach(f => {
+                html += `
+                    <tr>
+                        <td>${f.peliculaTitulo || 'N/A'}</td>
+                        <td>${f.salaNombre || 'N/A'}</td>
+                        <td>${f.fecha}</td>
+                        <td>${f.hora}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteFuncion(${f.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('funcionesTable').innerHTML = html;
+        }
+
+        function newFuncion() {
+            document.getElementById('modalFuncionTitle').textContent = 'Nueva Función';
+            loadPeliculasForFuncion();
+            loadSalasForFuncion();
+            document.getElementById('funcionFecha').value = '';
+            document.getElementById('funcionHora').value = '';
+            document.getElementById('funcionPrecio').value = '15';
+            openModal('funcionModal');
+        }
+
+        async function loadPeliculasForFuncion() {
+            const res = await fetch(`${API_URL}/api/peliculas`);
+            const pelis = await res.json();
+            const select = document.getElementById('funcionPelicula');
+            select.innerHTML = '<option value="">Selecciona película</option>';
+            pelis.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.Titulo;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadSalasForFuncion() {
+            const res = await fetch(`${API_URL}/api/salas`);
+            const salas = await res.json();
+            const select = document.getElementById('funcionSala');
+            select.innerHTML = '<option value="">Selecciona sala</option>';
+            salas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.nombre;
+                select.appendChild(opt);
+            });
+        }
+
+        async function saveFuncion() {
+            const peliculaId = document.getElementById('funcionPelicula').value;
+            const salaId = document.getElementById('funcionSala').value;
+            const fecha = document.getElementById('funcionFecha').value;
+            const hora = document.getElementById('funcionHora').value;
+            const precio = parseFloat(document.getElementById('funcionPrecio').value || 15);
+
+            if (!peliculaId || !salaId || !fecha || !hora) {
+                alert("Por favor completa todos los campos");
+                return;
+            }
+
+            const data = { peliculaId, salaId, fecha, hora, precio };
+
+            const res = await fetch(`${API_URL}/api/funciones`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert('Función creada correctamente');
+                closeModal('funcionModal');
+                loadFunciones();
+            } else {
+                alert('Error al crear la función');
+            }
+        }
+
+        async function deleteFuncion(id) {
+            if (!confirm('¿Eliminar esta función?')) return;
+            await fetch(`${API_URL}/api/funciones/${id}`, { method: 'DELETE' });
+            loadFunciones();
+        }
+        // ====================== DISPONIBILIDAD DE ASIENTOS ======================
+        async function loadMoviesForAvailability() {
+            try {
+                const res = await fetch(`${API_URL}/api/peliculas`);
+                const movies = await res.json();
+                const select = document.getElementById('availMovie');
+                select.innerHTML = '<option value="">-- Selecciona una película --</option>';
+                movies.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.Titulo;
+                    select.appendChild(opt);
+                });
+            } catch(e) {
+                console.error("Error cargando películas para disponibilidad", e);
+            }
+        }
+
+        async function loadFunctionsForMovie() {
+            const movieId = document.getElementById('availMovie').value;
+            if (!movieId) return;
+
+            const res = await fetch(`${API_URL}/api/funciones`);
+            const allFuncs = await res.json();
+            const funcs = allFuncs.filter(f => f.peliculaId == movieId);
+
+            const select = document.getElementById('availFunction');
+            select.innerHTML = '<option value="">-- Selecciona una función --</option>';
+
+            funcs.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = `${f.fecha} ${f.hora} - ${f.salaNombre || 'Sala desconocida'}`;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadSeatMap() {
+            const funcionId = document.getElementById('availFunction').value;
+            if (!funcionId) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/funciones/${funcionId}/asientos-ocupados`);
+                const data = await res.json();
+                const occupied = new Set(data.asientos || []);
+
+                const seatMap = document.getElementById('seatMap');
+                seatMap.innerHTML = '';
+
+                let sold = 0;
+                const rows = ['A','B','C','D','E','F','G','H'];
+
+                rows.forEach(row => {
+                    for (let col = 1; col <= 10; col++) {
+                        const seat = `${row}${col}`;
+                        const el = document.createElement('div');
+                        el.className = `seat ${occupied.has(seat) ? 'taken' : 'available'}`;
+                        el.textContent = seat;
+                        seatMap.appendChild(el);
+                        if (occupied.has(seat)) sold++;
+                    }
+                });
+
+                document.getElementById('soldCount').textContent = sold;
+                document.getElementById('availableCount').textContent = 80 - sold;
+            } catch(e) {
+                console.error("Error cargando mapa de asientos", e);
+            }
+        }
+        function logout() {
+            if (confirm('¿Estás seguro que quieres cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Inicializar
+        window.onload = () => {
+            loadDashboardStats();
+            loadPeliculas();
+            loadSalas();
+            loadFunciones();
+            loadMoviesForAvailability();
+        };
+    </script>
+</body>
+</html>

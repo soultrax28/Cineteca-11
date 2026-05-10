@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cineteca Nacional - Selección de Asientos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #f9f7f4;
+            color: #222;
+            line-height: 1.5;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 62px;
+        }
+
+        .logo {
+            color: #d4af37;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            margin-left: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+
+        nav a:hover {
+            color: #d4af37;
+        }
+
+        .user-panel {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+            margin-left: 1rem;
+        }
+
+        .user-panel.show {
+            display: flex;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a0f08;
+            font-weight: bold;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: #d4af37;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 0.92rem;
+            text-transform: none;
+            letter-spacing: 0;
+            line-height: 1.2;
+        }
+
+        .user-balance {
+            font-size: 0.8rem;
+            color: #e6c547;
+        }
+
+        .dashboard-btn {
+            padding: 0.45rem 0.8rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.86rem;
+        }
+
+        .dashboard-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            padding: 0.45rem 0.8rem;
+            background: #d4af37;
+            color: #1a0f08;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.86rem;
+        }
+
+        .logout-btn:hover {
+            background: #e6c547;
+        }
+
+        .wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 95px 20px 40px;
+        }
+
+        .show-info {
+            background: white;
+            border: 1px solid #e3d9ca;
+            border-left: 5px solid #d4af37;
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+        }
+
+        .show-info h1 {
+            color: #2c1810;
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .meta {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1rem;
+        }
+
+        .screen-area {
+            background: white;
+            border: 1px solid #e3d9ca;
+            border-radius: 12px;
+            padding: 1.2rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+
+        .screen {
+            width: 100%;
+            margin: 0 auto 1rem;
+            padding: 0.45rem;
+            text-align: center;
+            color: #2c1810;
+            font-weight: bold;
+            background: linear-gradient(to right, #f6ead0, #fff7e7, #f6ead0);
+            border-radius: 999px;
+            border: 1px solid #d4af37;
+            letter-spacing: 1px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            border: 1px solid #c7c7c7;
+        }
+
+        .dot.available { background: #fff; }
+        .dot.selected { background: #d4af37; border-color: #c89f22; }
+        .dot.taken { background: #c8c8c8; border-color: #b7b7b7; }
+        .dot.capacity-blocked { background: #8fa0b3; border-color: #75879d; }
+
+        .seats-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .seat-row {
+            display: grid;
+            grid-template-columns: 24px repeat(10, minmax(24px, 1fr));
+            gap: 8px;
+            align-items: center;
+        }
+
+        .row-label {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+        }
+
+        .seat {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: 1px solid #c8c8c8;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .seat:hover {
+            border-color: #d4af37;
+            transform: translateY(-1px);
+        }
+
+        .seat.selected {
+            background: #d4af37;
+            border-color: #c89f22;
+        }
+
+        .seat.taken {
+            background: #c8c8c8;
+            border-color: #b7b7b7;
+            cursor: not-allowed;
+        }
+
+        .seat.capacity-blocked {
+            background: #8fa0b3;
+            border-color: #75879d;
+            cursor: not-allowed;
+        }
+
+        .summary {
+            background: white;
+            border: 1px solid #e3d9ca;
+            border-radius: 12px;
+            padding: 1rem;
+            height: fit-content;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+
+        .summary h2 {
+            font-size: 1.1rem;
+            color: #2c1810;
+            margin-bottom: 0.8rem;
+        }
+
+        .summary p {
+            color: #555;
+            margin-bottom: 0.45rem;
+            font-size: 0.95rem;
+        }
+
+        .selected-list {
+            min-height: 48px;
+            padding: 0.5rem;
+            background: #fffdf8;
+            border: 1px dashed #d4af37;
+            border-radius: 8px;
+            margin: 0.6rem 0 1rem;
+            color: #444;
+        }
+
+        .buy-btn {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem;
+            background: #2c1810;
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 2px solid #d4af37;
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.7rem;
+            }
+
+            nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                justify-content: center;
+            }
+
+            nav a {
+                margin-left: 0;
+            }
+
+            .user-panel {
+                width: 100%;
+                margin-left: 0;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a class="logo" href="index.html">🎞️ Cineteca Nacional</a>
+            <nav>
+                <a href="index.html">Inicio</a>
+                <a href="horarios.html">Horarios</a>
+                <div class="user-panel" id="userPanel">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-details">
+                            <div class="user-name" id="userName">Usuario</div>
+                            <div class="user-balance">⭐ <span id="userBalance">0</span> pts</div>
+                        </div>
+                    </div>
+                    <button class="dashboard-btn" type="button" onclick="goToDashboard()">📊 Panel</button>
+                    <button class="logout-btn" type="button" onclick="logout()">Cerrar Sesión</button>
+                </div>
+                <a id="loginBtn" href="login.html">Acceder</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="wrapper">
+        <section class="show-info">
+            <h1 id="movieTitle">Película</h1>
+            <p class="meta" id="showMeta">Fecha • Sala • Hora</p>
+        </section>
+
+        <section class="layout">
+            <article class="screen-area">
+                <div class="screen">PANTALLA</div>
+
+                <div class="legend">
+                    <div class="legend-item"><span class="dot available"></span> Disponible</div>
+                    <div class="legend-item"><span class="dot selected"></span> Seleccionado</div>
+                    <div class="legend-item"><span class="dot capacity-blocked"></span> No disponible</div>
+                    <div class="legend-item"><span class="dot taken"></span> Ocupado</div>
+                </div>
+
+                <div id="seatsGrid" class="seats-grid"></div>
+            </article>
+
+            <aside class="summary">
+                <h2>Resumen</h2>
+                <p id="sumDate">Fecha:</p>
+                <p id="sumRoom">Sala:</p>
+                <p id="sumTime">Hora:</p>
+                <p id="sumAvailable">Disponibles configurados: 0</p>
+                <p id="sumCount">Boletos: 0</p>
+                <p id="sumTicketPrice">Precio por boleto: $0.00</p>
+                <p id="sumTotal">Total estimado: $0.00</p>
+                <p id="sumSaldo" style="color:#2c7a1e; font-weight:bold;">💳 Saldo: $0.00</p>
+
+                <div class="selected-list" id="selectedList">Selecciona tus asientos.</div>
+
+                <button id="buyBtn" class="buy-btn" disabled>Continuar Compra</button>
+                <a href="mi-billetera.html" style="display:block; text-align:center; margin-top:0.6rem; font-size:0.85rem; color:#888; text-decoration:none;">+ Recargar saldo</a>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        const params = new URLSearchParams(window.location.search);
+        const movie = params.get('pelicula') || 'Película no especificada';
+        const date = params.get('fecha') || '--/--';
+        const room = params.get('sala') || 'Sala';
+        const time = params.get('hora') || '--:--';
+        const funcionId = params.get('funcionId') || '';
+        const requestedPrice = parseFloat(params.get('precio'));
+        const ticketPrice = Number.isFinite(requestedPrice) && requestedPrice >= 0 ? requestedPrice : 15;
+
+        document.getElementById('movieTitle').textContent = movie;
+        document.getElementById('showMeta').textContent = `${date} • ${room} • ${time}`;
+        document.getElementById('sumDate').textContent = `Fecha: ${date}`;
+        document.getElementById('sumRoom').textContent = `Sala: ${room}`;
+        document.getElementById('sumTime').textContent = `Hora: ${time}`;
+
+        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const seatsPerRow = 10;
+        const totalSeats = rows.length * seatsPerRow;
+        const requestedAvailableSeats = parseInt(params.get('disponibles'), 10);
+        const availableSeats = Number.isFinite(requestedAvailableSeats)
+            ? Math.max(0, Math.min(totalSeats, requestedAvailableSeats))
+            : totalSeats;
+        document.getElementById('sumAvailable').textContent = `Disponibles configurados: ${availableSeats}/${totalSeats}`;
+        const seatsGrid = document.getElementById('seatsGrid');
+        const selectedList = document.getElementById('selectedList');
+        const sumCount = document.getElementById('sumCount');
+        const sumTicketPrice = document.getElementById('sumTicketPrice');
+        const sumTotal = document.getElementById('sumTotal');
+        const buyBtn = document.getElementById('buyBtn');
+        const userPanel = document.getElementById('userPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userBalance = document.getElementById('userBalance');
+        const selectedSeats = new Set();
+        const soldSeats = new Set();
+        sumTicketPrice.textContent = `Precio por boleto: $${ticketPrice.toFixed(2)}`;
+
+        function getCurrentUser() {
+            const usuarioStr = localStorage.getItem('usuario');
+            if (!usuarioStr) return null;
+            try {
+                return JSON.parse(usuarioStr);
+            } catch (error) {
+                localStorage.removeItem('usuario');
+                localStorage.removeItem('token');
+                return null;
+            }
+        }
+
+        function updateAuthNav() {
+            const user = getCurrentUser();
+            if (!user) {
+                userPanel.classList.remove('show');
+                loginBtn.style.display = 'inline-block';
+                return;
+            }
+
+            userName.textContent = user.nombre || user.email;
+            userAvatar.textContent = (user.nombre || user.email || 'U').charAt(0).toUpperCase();
+            userBalance.textContent = String(Number(user.puntos || 0));
+            userPanel.classList.add('show');
+            loginBtn.style.display = 'none';
+
+            // Mostrar saldo en el panel de resumen
+            const saldo = parseFloat(user.saldo || 0);
+            document.getElementById('sumSaldo').textContent = `💳 Saldo: $${saldo.toFixed(2)}`;
+        }
+
+        function goToDashboard() {
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const dashboardMap = {
+                'administrador': 'admin-dashboard.html',
+                'editor': 'editor-dashboard.html',
+                'consultor': 'consultor-dashboard.html'
+            };
+
+            window.location.href = dashboardMap[user.rol] || 'index.html';
+        }
+
+        function logout() {
+            if (!confirm('¿Deseas cerrar sesión?')) return;
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuario');
+            updateAuthNav();
+            window.location.href = 'index.html';
+        }
+
+        function isCapacityBlocked(row, col) {
+            const rowIndex = rows.indexOf(row);
+            const seatIndex = rowIndex * seatsPerRow + (col - 1);
+            return seatIndex >= availableSeats;
+        }
+
+        function seatIdIsSold(seatId) {
+            return soldSeats.has(seatId);
+        }
+
+        function updateSummary() {
+            const seats = Array.from(selectedSeats).sort();
+            sumCount.textContent = `Boletos: ${seats.length}`;
+            selectedList.textContent = seats.length ? seats.join(', ') : 'Selecciona tus asientos.';
+            const total = seats.length * ticketPrice;
+            sumTotal.textContent = `Total estimado: $${total.toFixed(2)}`;
+            buyBtn.disabled = seats.length === 0;
+        }
+
+        function buildSeatVerificationCodes(seats) {
+            return seats.map((seat, idx) => {
+                const base = `${funcionId || '0'}-${seat}-${idx}`;
+                let hash = 0;
+                for (let i = 0; i < base.length; i++) {
+                    hash = ((hash << 5) - hash) + base.charCodeAt(i);
+                    hash |= 0;
+                }
+                const code = Math.abs(hash).toString(36).toUpperCase().slice(0, 6).padStart(6, '0');
+                return { seat, code: `CN-${seat}-${code}` };
+            });
+        }
+
+        function restoreSelectedSeatsFromParams() {
+            const preselected = params.get('selectedSeats');
+            if (!preselected) return;
+
+            const seatsToRestore = preselected
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            seatsToRestore.forEach(seatId => {
+                const seatBtn = document.querySelector(`[aria-label="Asiento ${seatId}"]`);
+                if (!seatBtn || seatBtn.classList.contains('taken') || seatBtn.classList.contains('capacity-blocked')) return;
+                seatBtn.classList.add('selected');
+                selectedSeats.add(seatId);
+            });
+
+            updateSummary();
+        }
+
+        function renderSeatMap() {
+            seatsGrid.innerHTML = '';
+
+            rows.forEach((row) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'seat-row';
+
+                const label = document.createElement('div');
+                label.className = 'row-label';
+                label.textContent = row;
+                rowDiv.appendChild(label);
+
+                for (let col = 1; col <= seatsPerRow; col++) {
+                    const seatId = `${row}${col}`;
+                    const seat = document.createElement('button');
+                    seat.className = 'seat';
+                    seat.type = 'button';
+                    seat.setAttribute('aria-label', `Asiento ${seatId}`);
+
+                    if (isCapacityBlocked(row, col)) {
+                        seat.classList.add('capacity-blocked');
+                        seat.disabled = true;
+                    } else if (seatIdIsSold(seatId)) {
+                        seat.classList.add('taken');
+                        seat.disabled = true;
+                    }
+
+                    seat.addEventListener('click', () => {
+                        if (seat.classList.contains('taken') || seat.classList.contains('capacity-blocked')) return;
+                        seat.classList.toggle('selected');
+                        if (seat.classList.contains('selected')) {
+                            selectedSeats.add(seatId);
+                        } else {
+                            selectedSeats.delete(seatId);
+                        }
+                        updateSummary();
+                    });
+
+                    rowDiv.appendChild(seat);
+                }
+
+                seatsGrid.appendChild(rowDiv);
+            });
+        }
+
+        async function loadSoldSeats() {
+            soldSeats.clear();
+            if (!funcionId) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/funciones/${funcionId}/asientos-ocupados`);
+                if (!res.ok) return;
+
+                const data = await res.json();
+                (data.asientos || []).forEach(seatId => soldSeats.add(String(seatId).toUpperCase()));
+            } catch (err) {
+                console.error('Error cargando asientos ocupados:', err);
+            }
+        }
+
+        buyBtn.addEventListener('click', () => {
+            const user = getCurrentUser();
+            const token = localStorage.getItem('token');
+            const seats = Array.from(selectedSeats).sort();
+
+            if (!user || !token) {
+                const returnUrl = `${window.location.pathname}?${new URLSearchParams({
+                    pelicula: movie,
+                    fecha: date,
+                    sala: room,
+                    hora: time,
+                    funcionId,
+                    disponibles: String(availableSeats),
+                    precio: String(ticketPrice),
+                    selectedSeats: seats.join(',')
+                }).toString()}`;
+
+                window.location.href = `login.html?returnTo=${encodeURIComponent(returnUrl)}`;
+                return;
+            }
+
+            if (!funcionId) {
+                alert('No se pudo identificar la función para registrar la compra.');
+                return;
+            }
+
+            // Compra solo con saldo virtual
+            const puntosActuales = Number(user.puntos || 0);
+            const saldoActual = parseFloat(user.saldo || 0);
+            let useFreeTicket = false;
+            let useSaldo = true;
+
+            if (puntosActuales >= 5000) {
+                useFreeTicket = confirm('Tienes 5,000+ puntos. ¿Quieres canjear 1 boleto gratis en esta compra?');
+            }
+
+            const entradasPagadas = Math.max(0, seats.length - (useFreeTicket ? 1 : 0));
+            const costoSaldo = entradasPagadas * ticketPrice;
+
+            if (saldoActual < costoSaldo) {
+                alert(`Saldo insuficiente. Necesitas $${costoSaldo.toFixed(2)} y tienes $${saldoActual.toFixed(2)}.\nRecarga en Mi Billetera.`);
+                window.location.href = 'mi-billetera.html';
+                return;
+            }
+
+            const resumen = [
+                `Asientos: ${seats.join(', ')}`,
+                `Boletos: ${seats.length}`,
+                useFreeTicket ? 'Canje de puntos: 1 boleto gratis (-5,000 pts)' : 'Canje de puntos: no aplicado',
+                `Descuento de saldo: $${costoSaldo.toFixed(2)}`,
+                `Saldo restante: $${(saldoActual - costoSaldo).toFixed(2)}`
+            ].join('\n');
+
+            const codigosVerificacion = buildSeatVerificationCodes(seats)
+                .map(item => `${item.seat}: ${item.code}`)
+                .join('\n');
+
+            if (!confirm(`Confirma tu compra:\n\n${resumen}\n\nCódigos de verificación por asiento:\n${codigosVerificacion}`)) {
+                return;
+            }
+
+            fetch(`${API_URL}/api/funciones/${funcionId}/comprar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ seats, useFreeTicket, useSaldo })
+            })
+                .then(async (response) => {
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            localStorage.removeItem('usuario');
+                            localStorage.removeItem('token');
+                            alert('Tu sesión ha expirado. Por favor inicia sesión de nuevo.');
+                            window.location.href = `login.html?returnTo=${encodeURIComponent(window.location.href)}`;
+                            return;
+                        }
+                        const msg = data.error || 'No se pudo completar la compra';
+                        if (data.ocupados && data.ocupados.length) {
+                            alert(`${msg}. Ocupados: ${data.ocupados.join(', ')}`);
+                        } else {
+                            alert(msg);
+                        }
+                        if (response.status === 409) {
+                            window.location.reload();
+                        }
+                        return;
+                    }
+
+                    const updatedUser = {
+                        ...user,
+                        puntos: Number(data.puntosActuales || user.puntos || 0),
+                        saldo: parseFloat(data.saldoActual !== undefined ? data.saldoActual : (user.saldo || 0))
+                    };
+                    localStorage.setItem('usuario', JSON.stringify(updatedUser));
+
+                    const resumenPuntos = `Puntos +${data.puntosGanados || 0}${data.entradaGratisAplicada ? ` | Canje: -${data.puntosGastados || 0}` : ''} | Total: ${data.puntosActuales || 0}`;
+                    const resumenSaldo = data.pagadoConSaldo ? `\nSaldo restante: $${parseFloat(data.saldoActual).toFixed(2)}` : '';
+                    const codigosTicket = buildSeatVerificationCodes(seats)
+                        .map(item => `${item.seat}: ${item.code}`)
+                        .join('\n');
+                    alert(`Compra realizada para ${user.nombre || user.email}. Asientos: ${seats.join(', ')}\n${resumenPuntos}${resumenSaldo}\n\nVerificación de asientos:\n${codigosTicket}`);
+                    window.location.reload();
+                })
+                .catch((err) => {
+                    console.error('Error de compra:', err);
+                    alert('Error de conexión al comprar asientos');
+                });
+        });
+
+        loadSoldSeats().then(() => {
+            renderSeatMap();
+            restoreSelectedSeatsFromParams();
+        });
+
+        updateAuthNav();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cineteca Nacional - Cine Arte y Cultura</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            color: #222;
+            line-height: 1.6;
+            background: #f9f7f4;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 62px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #d4af37;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            line-height: 1;
+        }
+
+        nav {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+
+        nav a:hover {
+            color: #d4af37;
+        }
+
+        /* User Info Panel */
+        .user-panel {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+        }
+
+        .user-panel.show {
+            display: flex;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a0f08;
+            font-weight: bold;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: #d4af37;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 0.92rem;
+            text-transform: none;
+            letter-spacing: 0;
+            line-height: 1.2;
+        }
+
+        .user-balance {
+            font-size: 0.8rem;
+            color: #e6c547;
+        }
+
+        .dashboard-btn {
+            padding: 0.45rem 0.8rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.86rem;
+        }
+
+        .dashboard-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            padding: 0.45rem 0.8rem;
+            background: #d4af37;
+            color: #1a0f08;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.86rem;
+        }
+
+        .logout-btn:hover {
+            background: #e6c547;
+        }
+
+        /* Auth Forms Container */
+        .auth-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-overlay.show {
+            display: flex;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            max-width: 900px;
+            width: 90%;
+        }
+
+        .auth-banner {
+            background: linear-gradient(135deg, #2c1810 0%, #2d2d2d 100%);
+            color: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-width: 40%;
+            text-align: center;
+        }
+
+        .auth-form-section {
+            padding: 60px 40px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-header h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            color: #999;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toggle-form-link {
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .toggle-form-link a {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Carousel Container */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            overflow: hidden;
+            background: linear-gradient(to right, rgba(20,10,5,0.95), rgba(20,10,5,0.4));
+            margin-top: 60px;
+        }
+
+        .carousel-wrapper {
+            display: flex;
+            transition: transform 0.6s ease-in-out;
+            width: 100%;
+            height: 100%;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-slide::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .slide-content-left {
+            flex: 0 0 42%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 0;
+            z-index: 1;
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 100%;
+            max-width: 420px;
+            max-height: 560px;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3);
+            border: 3px solid #d4af37;
+        }
+
+        .slide-content-right {
+            flex: 1;
+            padding-left: 80px;
+            z-index: 1;
+        }
+
+        .badge {
+            color: #d4af37;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .badge::before {
+            content: "■";
+            font-size: 1rem;
+        }
+
+        .movie-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-family: 'Georgia', serif;
+        }
+
+        .movie-meta {
+            color: #aaa;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .movie-description {
+            font-size: 1rem;
+            color: #ddd;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            max-width: 500px;
+            font-style: italic;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 14px 35px;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: #d4af37;
+            color: #1a0f08;
+        }
+
+        .btn-primary:hover {
+            background: #e6c547;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+        }
+
+        .btn-secondary:hover {
+            background: #d4af37;
+            color: #1a0f08;
+        }
+
+        /* Nav Arrows */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3.5rem;
+            cursor: pointer;
+            color: #d4af37;
+            z-index: 10;
+            transition: all 0.3s;
+            user-select: none;
+            padding: 20px;
+        }
+
+        .nav-arrow:hover {
+            transform: translateY(-50%) scale(1.3);
+            color: #fff;
+        }
+
+        .prev {
+            left: 20px;
+        }
+
+        .next {
+            right: 20px;
+        }
+
+        /* Dots Container */
+        .dots-container {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #d4af37;
+        }
+
+        .dot.active {
+            background: #d4af37;
+            width: 30px;
+            border-radius: 5px;
+        }
+
+        .dot:hover {
+            background: #d4af37;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Secciones */
+        .section-title {
+            font-size: 2.8rem;
+            margin: 3rem 0 2rem 0;
+            text-align: center;
+            color: #2c1810;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 3px solid #d4af37;
+            padding-bottom: 1rem;
+        }
+
+        /* Películas en Cartelera */
+        .movies-section {
+            padding: 80px 20px;
+            background: #f9f7f4;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+            align-items: stretch;
+        }
+
+        .movie-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.4s;
+            border-top: 4px solid #d4af37;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.2);
+        }
+
+        .movie-card-poster {
+            width: 100%;
+            height: 400px;
+            background: #ddd;
+            object-fit: contain;
+        }
+
+        .movie-info {
+            padding: 1.8rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .movie-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: #2c1810;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .movie-year {
+            color: #999;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .movie-rating {
+            color: #d4af37;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .movie-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+            flex: 1;
+            text-align: justify;
+        }
+
+        .movie-card .btn {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+            background: #2c1810;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+        }
+
+        .movie-card .btn:hover {
+            background: #d4af37;
+            color: #1a0f08;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a0f08;
+            color: #d4af37;
+            text-align: center;
+            padding: 3rem 20px;
+        }
+
+        footer p {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .carousel-container {
+                height: 400px;
+                margin-top: 120px;
+            }
+
+            .carousel-slide {
+                flex-direction: column;
+                padding: 30px;
+                justify-content: center;
+            }
+
+            .slide-content-left {
+                margin-bottom: 30px;
+                padding-top: 0;
+            }
+
+            .slide-content-right {
+                padding-left: 0;
+            }
+
+            .movie-title {
+                font-size: 2.2rem;
+            }
+
+            .movie-description {
+                font-size: 0.9rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .nav-arrow {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .movies-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .auth-container {
+                flex-direction: column;
+            }
+
+            .auth-banner {
+                min-width: 100%;
+                padding: 40px 20px;
+            }
+
+            .auth-form-section {
+                padding: 40px 20px;
+            }
+
+            .user-panel {
+                flex-direction: column;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <a href="#home" class="logo">🎞️ Cineteca Nacional</a>
+            <nav>
+                <a href="#home">Inicio</a>
+                <a href="#movies">Películas</a>
+                <a href="horarios.html">Horarios</a>
+                
+                <!-- User Panel (Mostrado después del login) -->
+                <div class="user-panel" id="userPanel">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">J</div>
+                        <div class="user-details">
+                            <div class="user-name" id="userName">Usuario</div>
+                            <div class="user-balance">⭐ <span id="userBalance">0</span> pts | 💳 $<span id="userSaldo">0.00</span></div>
+                        </div>
+                    </div>
+                    <button class="dashboard-btn" id="walletBtn" onclick="window.location.href='mi-billetera.html'">💳 Recargar</button>
+                    <button class="dashboard-btn" id="dashboardBtn" onclick="goToDashboard()">📊 Panel</button>
+                    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+                </div>
+
+                <!-- Login Button (Mostrado cuando no está logueado) -->
+                <a href="#" id="loginBtn" onclick="showAuthForm(event)" style="color: #d4af37;">Acceder</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Auth Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-container">
+            <div class="auth-banner">
+                <div style="font-size: 4rem; margin-bottom: 20px;">🎬</div>
+                <h1>Cineteca Nacional</h1>
+                <p>Acceso al Sistema</p>
+            </div>
+
+            <div class="auth-form-section">
+                <div class="form-header">
+                    <h2 id="formTitle">Iniciar Sesión</h2>
+                    <p id="formSubtitle">Ingresa tus credenciales para acceder</p>
+                </div>
+
+                <div id="authAlert" class="alert"></div>
+
+                <!-- LOGIN FORM -->
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Iniciar Sesión</button>
+                </form>
+
+                <!-- REGISTER FORM -->
+                <form id="register-form" onsubmit="handleRegister(event)" class="hidden">
+                    <div class="form-group">
+                        <label for="reg-nombre">Nombre Completo</label>
+                        <input type="text" id="reg-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Correo Electrónico</label>
+                        <input type="email" id="reg-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Contraseña</label>
+                        <input type="password" id="reg-password" required minlength="6">
+                    </div>
+                    <button type="submit" class="submit-btn">Registrarse</button>
+                </form>
+
+                <div class="toggle-form-link">
+                    <p id="toggleText">¿No tienes cuenta? <a onclick="toggleAuthForm()">Regístrate aquí</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carousel -->
+         <!-- Carousel Dinámico - Últimas 3 películas -->
+    <div class="carousel-container" id="home">
+        <div class="carousel-wrapper" id="carouselWrapper">
+            <!-- Se llena automáticamente con las 3 últimas películas -->
+        </div>
+
+        <!-- Controles -->
+        <span class="nav-arrow prev" onclick="moveSlide(-1)">&#8249;</span>
+        <span class="nav-arrow next" onclick="moveSlide(1)">&#8250;</span>
+        <div class="dots-container" id="dotsContainer"></div>
+    </div>
+                
+
+           
+
+            
+
+           
+
+
+    <!-- Películas en Cartelera -->
+    <!-- Películas en Cartelera -->
+<section class="movies-section" id="movies">
+    <div class="container">
+        <h2 class="section-title">En Cartelera</h2>
+        <div class="movies-grid" id="movies-grid">
+            <p style="text-align:center; color:#999;">Cargando películas...</p>
+        </div>
+                </div>
+            </div>
+        </div>
+</section>
+        <!-- Modal Nueva Película -->
+
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Cineteca Nacional. Dedicados al arte cinematográfico.</p>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // ==================== CAROUSEL ====================
+               // ==================== CAROUSEL DINÁMICO (Últimas 3 películas) ====================
+               // ==================== CAROUSEL DINÁMICO (Últimas 3 películas) ====================
+        let currentSlide = 0;
+        let totalSlides = 0;
+
+        async function cargarCarrusel() {
+            const wrapper = document.getElementById('carouselWrapper');
+            wrapper.innerHTML = '<div style="color:white; text-align:center; padding:120px 20px;">Cargando cartelera destacada...</div>';
+
+            try {
+                const res = await fetch(`${API_URL}/api/peliculas`);
+                const peliculas = await res.json();
+
+                // Tomamos las 3 últimas películas (las más recientes)
+                const ultimas = peliculas.slice(-3).reverse();
+
+                if (ultimas.length === 0) {
+                    wrapper.innerHTML = '<div style="color:white; text-align:center; padding:120px 20px;">No hay películas disponibles</div>';
+                    return;
+                }
+
+                wrapper.innerHTML = '';
+                totalSlides = ultimas.length;
+
+                ultimas.forEach(p => {
+                    const imgUrl = p.imagen_url || 'Imagenes/default.jpg';
+
+                    const slideHTML = `
+                        <div class="carousel-slide" style="background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);">
+                            <div class="slide-content-left">
+                                <img src="${imgUrl}" 
+                                     alt="${p.Titulo}" 
+                                     class="movie-poster"
+                                     onerror="this.src='https://via.placeholder.com/420x560/333/ddd?text=Sin+Imagen';">
+                            </div>
+                            <div class="slide-content-right">
+                                <div class="badge">Lo Más Nuevo</div>
+                                <h2 class="movie-title">${p.Titulo}</h2>
+                                <div class="movie-meta">
+                                    
+                                    <span>${p.Duracion || '?'} min</span>
+                                    <span>${p.Genero || 'Sin género'}</span>
+                                </div>
+                                <p class="movie-description">
+                                    ${p.Sinopsis ? p.Sinopsis.substring(0, 140) + '...' : 'Película destacada de la Cineteca Nacional.'}
+                                </p>
+                                <div class="button-group">
+                                    <button class="btn btn-secondary" 
+                                            onclick="checkAuthThenRedirect('horarios.html?pelicula=${encodeURIComponent(p.Titulo)}')">
+                                        Comprar Entrada
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    wrapper.innerHTML += slideHTML;
+                });
+
+                createDots();
+                updateCarousel();
+
+                // Auto slide cada 6 segundos
+                setInterval(autoSlide, 6000);
+
+            } catch (err) {
+                console.error("Error cargando carrusel:", err);
+                wrapper.innerHTML = '<div style="color:white; text-align:center; padding:120px 20px;">Error al cargar las películas destacadas</div>';
+            }
+        }
+
+        function createDots() {
+            const dotsContainer = document.getElementById('dotsContainer');
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'dot';
+                if (i === 0) dot.classList.add('active');
+                dot.onclick = () => goToSlide(i);
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            updateCarousel();
+        }
+
+        function moveSlide(n) {
+            currentSlide += n;
+            if (currentSlide >= totalSlides) currentSlide = 0;
+            if (currentSlide < 0) currentSlide = totalSlides - 1;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const wrapper = document.getElementById('carouselWrapper');
+            const offset = -currentSlide * 100;
+            wrapper.style.transform = `translateX(${offset}%)`;
+
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.remove('active');
+                if (index === currentSlide) dot.classList.add('active');
+            });
+        }
+
+        function autoSlide() {
+            moveSlide(1);
+        }
+
+        // ==================== AUTENTICACIÓN ====================
+
+        function showAuthForm(e) {
+            e.preventDefault();
+            document.getElementById('authOverlay').classList.add('show');
+        }
+
+        function closeAuthForm() {
+            document.getElementById('authOverlay').classList.remove('show');
+        }
+
+        function toggleAuthForm() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+            const toggleText = document.getElementById('toggleText');
+            if (toggleText.innerHTML.includes('¿No tienes')) {
+                toggleText.innerHTML = '¿Ya tienes cuenta? <a onclick="toggleAuthForm()">Inicia sesión aquí</a>';
+            } else {
+                toggleText.innerHTML = '¿No tienes cuenta? <a onclick="toggleAuthForm()">Regístrate aquí</a>';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showAuthAlert(data.error || 'Usuario o contraseña incorrectos', 'error');
+                    return;
+                }
+
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+
+                showAuthAlert('✓ Iniciando sesión...', 'success');
+                
+                setTimeout(() => {
+                    closeAuthForm();
+                    updateUserUI();
+                    document.getElementById('login-form').reset();
+                }, 1200);
+
+            } catch (err) {
+                showAuthAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('reg-nombre').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showAuthAlert(data.error || 'Error al registrar', 'error');
+                    return;
+                }
+
+                showAuthAlert('✓ Registrado como Consultor. Ahora inicia sesión.', 'success');
+                setTimeout(() => {
+                    document.getElementById('register-form').reset();
+                    toggleAuthForm();
+                }, 1800);
+
+            } catch (err) {
+                showAuthAlert('Error de conexión', 'error');
+            }
+        }
+
+        function logout() {
+            if (confirm('¿Deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                updateUserUI();
+                alert('Sesión cerrada correctamente');
+            }
+        }
+
+        function updateUserUI() {
+            const usuario = localStorage.getItem('usuario');
+            const userPanel = document.getElementById('userPanel');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (usuario) {
+                const user = JSON.parse(usuario);
+                document.getElementById('userName').textContent = user.nombre;
+                document.getElementById('userAvatar').textContent = user.nombre.charAt(0).toUpperCase();
+                document.getElementById('userBalance').textContent = String(Number(user.puntos || 0));
+                document.getElementById('userSaldo').textContent = Number(user.saldo || 0).toFixed(2);
+
+                userPanel.classList.add('show');
+                loginBtn.style.display = 'none';
+            } else {
+                userPanel.classList.remove('show');
+                loginBtn.style.display = 'block';
+            }
+        }
+
+        async function syncUserFromServer() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!data?.usuario) return;
+
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                updateUserUI();
+            } catch (error) {
+                console.error('No se pudo sincronizar usuario:', error);
+            }
+        }
+
+        function goToDashboard() {
+            const usuario = localStorage.getItem('usuario');
+            if (!usuario) {
+                showAuthForm({ preventDefault: () => {} });
+                return;
+            }
+
+            const user = JSON.parse(usuario);
+            const dashboardMap = {
+                'administrador': 'admin-dashboard.html',
+                'editor': 'editor-dashboard.html',
+                'consultor': 'consultor-dashboard.html'
+            };
+
+            const dashboard = dashboardMap[user.rol] || 'index.html';
+            window.location.href = dashboard;
+        }
+
+        function checkAuthThenRedirect(url) {
+            // La validación de sesión se hace al confirmar compra en asientos.
+            window.location.href = url;
+        }
+
+        function showAuthAlert(message, type) {
+            const alert = document.getElementById('authAlert');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+        }
+
+        // ==================== INICIALIZAR ====================
+        // ==================== INICIALIZAR ====================
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("✅ Página cargada - Iniciando aplicación...");
+    updateUserUI();
+    syncUserFromServer();
+    
+    // Cargar las películas
+    cargarCartelera().catch(err => {
+        console.error("Error crítico al cargar cartelera:", err);
+    });
+});
+
+       // ======================= CARGAR PELÍCULAS DE BD =======================
+// ======================= CARGAR PELÍCULAS DE BD =======================
+async function cargarCartelera() {
+    const grid = document.getElementById('movies-grid');
+    if (!grid) {
+        console.error("No se encontró el elemento movies-grid");
+        return;
+    }
+
+    grid.innerHTML = '<p style="text-align:center; color:#666;">Cargando cartelera...</p>';
+
+    try {
+        const res = await fetch('/api/peliculas');
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const peliculas = await res.json();
+
+        grid.innerHTML = '';
+
+        if (peliculas.length === 0) {
+            grid.innerHTML = '<p style="text-align:center; color:#999;">No hay películas disponibles.</p>';
+            return;
+        }
+
+        peliculas.forEach(p => {
+            const imgUrl = p.imagen_url || '/imagenes/default.jpg';
+
+            grid.innerHTML += `
+                <div class="movie-card">
+                    <img src="${imgUrl}" 
+                         alt="${p.Titulo}" 
+                         class="movie-card-poster"
+                         onerror="this.src='https://via.placeholder.com/300x400/ddd/666?text=Sin+Imagen';">
+                    <div class="movie-info">
+                        <h3>${p.Titulo}</h3>
+                       
+                        <div class="movie-rating">${p.Genero || ''}</div>
+                        
+                        <button class="btn" onclick="checkAuthThenRedirect('horarios.html?pelicula=${encodeURIComponent(p.Titulo)}')">
+                            Comprar Entrada
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+    } catch (err) {
+        console.error("Error en cargarCartelera:", err);
+        grid.innerHTML = `<p style="color:red; text-align:center;">Error al cargar películas: ${err.message}</p>`;
+    }
+}
+    // ==================== INICIALIZAR ====================
+
+    // ... todas tus funciones (updateUserUI, checkAuthThenRedirect, etc.)
+
+    // ==================== INICIALIZAR ====================
+    window.addEventListener('DOMContentLoaded', () => {
+        console.log("✅ DOM listo - Iniciando Cineteca");
+        updateUserUI();
+        cargarCartelera();
+        cargarCarrusel();
+    });
+
+
+    </script>
+</body>
+</html>

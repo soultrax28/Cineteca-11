@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cineteca Nacional - Horarios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            color: #222;
+            line-height: 1.6;
+            background: #f9f7f4;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 62px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #d4af37;
+            text-decoration: none;
+            line-height: 1;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+
+        nav a:hover {
+            color: #d4af37;
+        }
+
+        .user-panel {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+        }
+
+        .user-panel.show {
+            display: flex;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a0f08;
+            font-weight: bold;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: #d4af37;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 0.92rem;
+            text-transform: none;
+            letter-spacing: 0;
+            line-height: 1.2;
+        }
+
+        .user-balance {
+            font-size: 0.8rem;
+            color: #e6c547;
+        }
+
+        .dashboard-btn {
+            padding: 0.45rem 0.8rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.86rem;
+        }
+
+        .dashboard-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            padding: 0.45rem 0.8rem;
+            background: #d4af37;
+            color: #1a0f08;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.86rem;
+        }
+
+        .logout-btn:hover {
+            background: #e6c547;
+        }
+
+        .hero {
+            margin-top: 60px;
+            padding: 70px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+            color: #d4af37;
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hero p {
+            color: #ddd;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+
+        .filters {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e0d9cf;
+            padding: 1.2rem;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .filters h2 {
+            font-size: 1rem;
+            color: #2c1810;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .date-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.7rem;
+        }
+
+        .date-chip {
+            border: 1px solid #d7d7d7;
+            background: white;
+            padding: 0.75rem;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #2c1810;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .date-chip.active {
+            background: #d4af37;
+            color: #1a0f08;
+            border-color: #c89f22;
+        }
+
+        .schedule-title {
+            font-size: 1.3rem;
+            color: #2c1810;
+            margin: 1.4rem 0 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .movie-schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .movie-schedule {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+            align-items: start;
+            background: white;
+            border: 1px solid #dfd8cd;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+
+        .movie-thumb {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #d4af37;
+        }
+
+        .movie-content h3 {
+            color: #2c1810;
+            margin-bottom: 0.35rem;
+            font-size: 1.2rem;
+        }
+
+        .movie-meta {
+            color: #777;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        .format-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .format-tag {
+            padding: 0.3rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #1d4f91;
+            background: #e8f0fb;
+            border: 1px solid #bdd3f1;
+        }
+
+        .times {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+        }
+
+        .time-btn {
+            min-width: 110px;
+            border: 1px solid #c9d8ef;
+            background: #f4f8ff;
+            color: #153a6b;
+            border-radius: 8px;
+            padding: 0.55rem 0.65rem;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-btn small {
+            display: block;
+            font-size: 0.72rem;
+            color: #5f6b7c;
+            font-weight: normal;
+            margin-top: 1px;
+        }
+
+        .time-btn:hover {
+            background: #d4af37;
+            color: #1a0f08;
+            border-color: #c89f22;
+        }
+
+        .time-btn:hover small {
+            color: #1a0f08;
+        }
+
+        .back-wrap {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.65rem 1.3rem;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            color: #2c1810;
+            font-weight: bold;
+            text-decoration: none;
+            background: #fffdf8;
+        }
+
+        .back-link:hover {
+            background: #d4af37;
+            color: #1a0f08;
+        }
+
+        @media (max-width: 768px) {
+            .movie-schedule {
+                grid-template-columns: 1fr;
+            }
+
+            .movie-thumb {
+                height: 220px;
+            }
+
+            .time-btn {
+                flex: 1 1 48%;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .user-panel {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.7rem;
+            }
+        }
+
+        .filter-notice {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #2c1810;
+            color: #f9f7f4;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-family: Georgia, serif;
+            font-size: 0.95rem;
+            border-left: 4px solid #d4af37;
+        }
+        .filter-notice .filter-title { color: #d4af37; }
+        .filter-clear {
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 0.88rem;
+            border: 1px solid #d4af37;
+            padding: 0.25rem 0.65rem;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .filter-clear:hover { background: #d4af37; color: #1a0f08; }
+        .no-results {
+            color: #2c1810;
+            font-style: italic;
+            padding: 1.5rem 0;
+            text-align: center;
+            font-family: Georgia, serif;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="index.html" class="logo">🎞️ Cineteca Nacional</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="index.html#movies">Películas</a></li>
+                    <li><a href="horarios.html">Funciones</a></li>
+                    <li>
+                        <div class="user-panel" id="userPanel">
+                            <div class="user-info">
+                                <div class="user-avatar" id="userAvatar">U</div>
+                                <div class="user-details">
+                                    <div class="user-name" id="userName">Usuario</div>
+                                    <div class="user-balance">⭐ <span id="userBalance">0</span> pts | 💳 $<span id="userSaldo">0.00</span></div>
+                                </div>
+                            </div>
+                            <button class="dashboard-btn" type="button" onclick="window.location.href='mi-billetera.html'">💳 Recargar</button>
+                            <button class="dashboard-btn" type="button" onclick="goToDashboard()">📊 Panel</button>
+                            <button class="logout-btn" type="button" onclick="logout()">Cerrar Sesión</button>
+                        </div>
+                    </li>
+                    <li><a id="loginBtn" href="login.html">Acceder</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Funciones</h1>
+        <p>Consulta funciones disponibles por película y organiza tu visita a la Cineteca.</p>
+    </section>
+
+    <main class="container">
+        <section class="filters">
+            <h2>Selecciona una fecha</h2>
+            <div class="date-list">
+                <button class="date-chip active" data-date="01/04">Hoy<br>01/04</button>
+                <button class="date-chip" data-date="02/04">Mañana<br>02/04</button>
+                <button class="date-chip" data-date="03/04">Jue<br>03/04</button>
+                <button class="date-chip" data-date="04/04">Vie<br>04/04</button>
+                <button class="date-chip" data-date="05/04">Sáb<br>05/04</button>
+                <button class="date-chip" data-date="06/04">Dom<br>06/04</button>
+            </div>
+        </section>
+
+        <h2 class="schedule-title">Funciones disponibles</h2>
+
+        <div id="filterNotice" class="filter-notice" style="display:none">
+            <span>Mostrando funciones de: <strong class="filter-title"></strong></span>
+            <a href="horarios.html" class="filter-clear">Ver todas las funciones</a>
+        </div>
+
+        <section class="movie-schedule-list" id="movieScheduleList"></section>
+
+        <div class="back-wrap">
+            <a href="index.html" class="back-link">Volver al inicio</a>
+        </div>
+    </main>
+
+    <script>
+    const API_URL = 'http://localhost:3000';
+    const dateChips = document.querySelectorAll('.date-chip');
+    const movieScheduleList = document.getElementById('movieScheduleList');
+    const filterNotice = document.getElementById('filterNotice');
+    const userPanel = document.getElementById('userPanel');
+    const loginBtn = document.getElementById('loginBtn');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const userBalance = document.getElementById('userBalance');
+    const userSaldo = document.getElementById('userSaldo');
+    let currentSelectedDate = '06/04';   // Cambia a '09/04' si quieres ver la otra
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterMovie = urlParams.get('pelicula');
+
+    if (filterMovie) {
+        filterNotice.style.display = 'flex';
+        filterNotice.querySelector('.filter-title').textContent = filterMovie;
+    }
+
+    function getCurrentUser() {
+        const usuarioStr = localStorage.getItem('usuario');
+        if (!usuarioStr) return null;
+        try {
+            return JSON.parse(usuarioStr);
+        } catch (error) {
+            localStorage.removeItem('usuario');
+            localStorage.removeItem('token');
+            return null;
+        }
+    }
+
+    function updateAuthNav() {
+        const user = getCurrentUser();
+        if (!user) {
+            userPanel.classList.remove('show');
+            loginBtn.style.display = 'inline-block';
+            return;
+        }
+
+        userName.textContent = user.nombre || user.email;
+        userAvatar.textContent = (user.nombre || user.email || 'U').charAt(0).toUpperCase();
+        userBalance.textContent = String(Number(user.puntos || 0));
+        userSaldo.textContent = Number(user.saldo || 0).toFixed(2);
+        userPanel.classList.add('show');
+        loginBtn.style.display = 'none';
+    }
+
+    async function syncUserFromServer() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!data?.usuario) return;
+
+            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            updateAuthNav();
+        } catch (error) {
+            console.error('No se pudo sincronizar usuario:', error);
+        }
+    }
+
+    function goToDashboard() {
+        const user = getCurrentUser();
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const dashboardMap = {
+            'administrador': 'admin-dashboard.html',
+            'editor': 'editor-dashboard.html',
+            'consultor': 'consultor-dashboard.html'
+        };
+
+        window.location.href = dashboardMap[user.rol] || 'index.html';
+    }
+
+    function logout() {
+        if (!confirm('¿Deseas cerrar sesión?')) return;
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        updateAuthNav();
+        window.location.href = 'index.html';
+    }
+
+    function formatToDBDate(dateStr) {
+        const [day, month] = dateStr.split('/');
+        return `2026-${month}-${day}`;
+    }
+
+    async function fetchFunctionsByDate(dateStr) {
+        const dbFecha = formatToDBDate(dateStr);
+        const url = `${API_URL}/api/funciones?fecha=${dbFecha}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Error al cargar funciones');
+        return await res.json();
+    }
+
+    function groupFunctionsByMovie(functions) {
+        const grouped = {};
+
+        functions.forEach(f => {
+            const title = f.peliculaTitulo;
+            if (!grouped[title]) {
+                grouped[title] = {
+                    title: title,
+                    image: f.imagen_url || 'Imagenes/default.jpg',
+                    meta: `${f.Genero || 'Sin género'} • ${f.Duracion || '?'} min`,
+                    formats: [],
+                    showtimes: []
+                };
+            }
+
+            if (!grouped[title].formats.includes(f.tecnologia || 'Tradicional')) {
+                grouped[title].formats.push(f.tecnologia || 'Tradicional');
+            }
+
+            grouped[title].showtimes.push({
+                funcionId: f.id,
+                time: f.hora.substring(0,5),
+                room: f.salaNombre,
+                availableSeats: parseInt(f.asientosDisponibles, 10) || 0,
+                price: Number(f.precio || 0)
+            });
+        });
+
+        Object.values(grouped).forEach(movie => {
+            movie.showtimes.sort((a, b) => a.time.localeCompare(b.time));
+        });
+
+        return Object.values(grouped);
+    }
+
+    async function renderSchedules(selectedDate) {
+        movieScheduleList.innerHTML = '<p style="text-align:center; padding:2rem; color:#777;">Cargando funciones...</p>';
+
+        try {
+            let functions = await fetchFunctionsByDate(selectedDate);
+
+            if (filterMovie) {
+                functions = functions.filter(f => f.peliculaTitulo === filterMovie);
+            }
+
+            const movies = groupFunctionsByMovie(functions);
+            movieScheduleList.innerHTML = '';
+
+            if (movies.length === 0) {
+                movieScheduleList.innerHTML = `
+                    <p class="no-results">
+                        No hay funciones disponibles para esta fecha.<br>
+                        <small>Prueba con otra fecha.</small>
+                    </p>`;
+                return;
+            }
+
+            movies.forEach((movie) => {
+                const formatTags = movie.formats
+                    .map(format => `<span class="format-tag">${format}</span>`)
+                    .join('');
+
+                const timeButtons = movie.showtimes
+                    .map(show => `
+                        <button class="time-btn" 
+                                onclick="goToSeats('${movie.title.replace(/'/g, "&#39;")}', '${selectedDate}', '${show.room}', '${show.time}', ${show.funcionId}, ${show.availableSeats}, ${show.price})">
+                            ${show.time}<small>${show.room}</small>
+                        </button>
+                    `)
+                    .join('');
+
+                let imageSrc = movie.image || 'Imagenes/default.jpg';
+                if (imageSrc.includes('/imagenes/')) {
+                    imageSrc = imageSrc.replace('/imagenes/', 'Imagenes/');
+                }
+
+                const card = document.createElement('article');
+                card.className = 'movie-schedule';
+                card.innerHTML = `
+                    <img src="${imageSrc}" 
+                         alt="${movie.title}" 
+                         class="movie-thumb"
+                         onerror="this.onerror=null; this.src='Imagenes/default.jpg';">
+                    <div class="movie-content">
+                        <h3>${movie.title}</h3>
+                        <p class="movie-meta">${movie.meta}</p>
+                        <div class="format-row">${formatTags}</div>
+                        <div class="times">${timeButtons}</div>
+                    </div>
+                `;
+                movieScheduleList.appendChild(card);
+            });
+
+        } catch (err) {
+            console.error(err);
+            movieScheduleList.innerHTML = `<p class="no-results" style="color:red;">Error al cargar funciones.</p>`;
+        }
+    }
+
+    dateChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            dateChips.forEach(item => item.classList.remove('active'));
+            chip.classList.add('active');
+            currentSelectedDate = chip.dataset.date;
+            renderSchedules(currentSelectedDate);
+        });
+    });
+
+    function goToSeats(movieTitle, date, room, time, funcionId, disponibles, precio) {
+        const params = new URLSearchParams({
+            pelicula: movieTitle,
+            fecha: date,
+            sala: room,
+            hora: time,
+            funcionId: String(funcionId),
+            disponibles: String(disponibles),
+            precio: String(Number(precio || 0))
+        });
+        window.location.href = `asientos.html?${params.toString()}`;
+    }
+
+    window.addEventListener('load', () => {
+        updateAuthNav();
+        syncUserFromServer();
+        renderSchedules(currentSelectedDate);
+    });
+</script>
+</body>
+</html>

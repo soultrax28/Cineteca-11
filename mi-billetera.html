@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Billetera - Cineteca Nacional</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #f9f7f4;
+            color: #222;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+        }
+
+        .header-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 62px;
+        }
+
+        .logo {
+            color: #d4af37;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.6rem;
+        }
+
+        nav { display: flex; align-items: center; gap: 1.5rem; }
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        nav a:hover { color: #d4af37; }
+
+        .nav-saldo {
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 0.9rem;
+            background: rgba(212, 175, 55, 0.14);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 999px;
+            padding: 0.35rem 0.7rem;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .wrapper {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 95px 20px 50px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: #2c1810;
+            margin-bottom: 0.3rem;
+        }
+
+        .page-subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /* ---- Tarjeta de saldo ---- */
+        .balance-card {
+            background: linear-gradient(135deg, #2c1810 0%, #4a2617 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px rgba(44,24,16,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .balance-label {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 0.4rem;
+        }
+
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #d4af37;
+            line-height: 1;
+        }
+
+        .balance-points {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 0.5rem;
+        }
+
+        .balance-icon {
+            font-size: 4rem;
+            opacity: 0.3;
+        }
+
+        /* ---- Sección recargar ---- */
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+            border: 1px solid #e8e0d5;
+        }
+
+        .section-card h2 {
+            color: #2c1810;
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 0.6rem;
+        }
+
+        .quick-amounts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .amount-btn {
+            padding: 0.9rem;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            background: white;
+            color: #2c1810;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Georgia', serif;
+        }
+
+        .amount-btn:hover, .amount-btn.selected {
+            background: #d4af37;
+            color: #1a0f08;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(212,175,55,0.3);
+        }
+
+        .custom-amount-row {
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.4rem;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            padding: 0.75rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-family: 'Georgia', serif;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+        .recharge-btn {
+            padding: 0.75rem 1.8rem;
+            background: #2c1810;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .recharge-btn:hover {
+            background: #d4af37;
+            color: #1a0f08;
+        }
+
+        .recharge-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ---- Toast ---- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: white;
+            z-index: 9999;
+            transform: translateY(120px);
+            transition: transform 0.35s ease;
+            max-width: 360px;
+        }
+
+        .toast.show { transform: translateY(0); }
+        .toast.success { background: #38a169; }
+        .toast.error { background: #e53e3e; }
+
+        /* ---- Info ---- */
+        .info-note {
+            background: #fffbec;
+            border-left: 4px solid #d4af37;
+            padding: 1rem 1.2rem;
+            border-radius: 6px;
+            color: #7a5c00;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover { color: #d4af37; }
+
+        @media (max-width: 600px) {
+            .quick-amounts { grid-template-columns: repeat(2, 1fr); }
+            .custom-amount-row { flex-direction: column; }
+            .balance-card { flex-direction: column; text-align: center; }
+            .balance-icon { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a class="logo" href="index.html">🎞️ Cineteca Nacional</a>
+            <nav>
+                <a href="index.html">Inicio</a>
+                <a href="horarios.html">Horarios</a>
+                <a href="#" onclick="goToDashboard()">Mi Panel</a>
+                <span class="nav-saldo">Saldo: $<span id="navSaldo">0.00</span></span>
+                <a href="#" onclick="logout()" style="color:#d4af37;">Salir</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="wrapper">
+        <a class="back-link" href="#" onclick="goToDashboard(); return false;">← Volver al panel</a>
+
+        <h1 class="page-title">💳 Mi Billetera</h1>
+        <p class="page-subtitle">Recarga saldo virtual para comprar boletos en Cineteca Nacional.</p>
+
+        <!-- Tarjeta de saldo -->
+        <div class="balance-card">
+            <div>
+                <div class="balance-label">Saldo disponible</div>
+                <div class="balance-amount">$<span id="saldoDisplay">0.00</span></div>
+                <div class="balance-points">⭐ <span id="puntosDisplay">0</span> puntos acumulados</div>
+            </div>
+            <div class="balance-icon">💰</div>
+        </div>
+
+        <!-- Recargar saldo -->
+        <div class="section-card">
+            <h2>Recargar Saldo</h2>
+
+            <p style="color:#666; margin-bottom:1.2rem; font-size:0.92rem;">
+                Selecciona un monto rápido o ingresa una cantidad personalizada:
+            </p>
+
+            <div class="quick-amounts">
+                <button class="amount-btn" onclick="selectAmount(50)">$50</button>
+                <button class="amount-btn" onclick="selectAmount(100)">$100</button>
+                <button class="amount-btn" onclick="selectAmount(200)">$200</button>
+                <button class="amount-btn" onclick="selectAmount(500)">$500</button>
+            </div>
+
+            <div class="custom-amount-row">
+                <div class="form-group">
+                    <label for="montoInput">Monto personalizado ($)</label>
+                    <input type="number" id="montoInput" min="1" max="10000" step="1"
+                           placeholder="Ej: 350" oninput="clearQuickSelection()">
+                </div>
+                <button class="recharge-btn" id="rechargeBtn" onclick="recargarSaldo()">
+                    ➕ Recargar
+                </button>
+            </div>
+
+            <div class="info-note">
+                💡 Este es dinero virtual de prueba. El saldo se descuenta automáticamente al comprar boletos.
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="auth.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:3000';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type}`;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function goToDashboard() {
+            const user = getCurrentUser();
+            if (!user) { window.location.href = 'login.html'; return; }
+            const map = {
+                'administrador': 'admin-dashboard.html',
+                'editor': 'editor-dashboard.html',
+                'consultor': 'consultor-dashboard.html'
+            };
+            window.location.href = map[user.rol] || 'index.html';
+        }
+
+        function selectAmount(amount) {
+            document.getElementById('montoInput').value = amount;
+            document.querySelectorAll('.amount-btn').forEach(b => {
+                b.classList.toggle('selected', parseInt(b.textContent.replace('$', '')) === amount);
+            });
+        }
+
+        function clearQuickSelection() {
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+        }
+
+        async function loadSaldo() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/billetera/saldo`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const saldoFmt = parseFloat(data.saldo).toFixed(2);
+                    document.getElementById('saldoDisplay').textContent = saldoFmt;
+                    document.getElementById('navSaldo').textContent = saldoFmt;
+                }
+            } catch (_) {}
+        }
+
+        async function recargarSaldo() {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = 'login.html'; return; }
+
+            const monto = parseFloat(document.getElementById('montoInput').value);
+            if (!monto || monto <= 0) {
+                showToast('Por favor ingresa un monto válido', 'error');
+                return;
+            }
+            if (monto > 10000) {
+                showToast('El monto máximo es $10,000', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('rechargeBtn');
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/billetera/recargar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ monto })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.error || 'Error al recargar', 'error');
+                    return;
+                }
+
+                // Actualizar saldo en UI y localStorage
+                const nuevoSaldo = parseFloat(data.saldo).toFixed(2);
+                document.getElementById('saldoDisplay').textContent = nuevoSaldo;
+                document.getElementById('navSaldo').textContent = nuevoSaldo;
+
+                const usuario = getCurrentUser();
+                if (usuario) {
+                    usuario.saldo = parseFloat(data.saldo);
+                    localStorage.setItem('usuario', JSON.stringify(usuario));
+                }
+
+                showToast(`✅ Recarga exitosa. Saldo: $${nuevoSaldo}`, 'success');
+                document.getElementById('montoInput').value = '';
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+
+            } catch (err) {
+                showToast('Error de conexión', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '➕ Recargar';
+            }
+        }
+
+        // Inicializar
+        (function init() {
+            if (!checkAuth()) return;
+            const user = getCurrentUser();
+            if (user) {
+                const saldoFmt = parseFloat(user.saldo || 0).toFixed(2);
+                document.getElementById('saldoDisplay').textContent = saldoFmt;
+                document.getElementById('navSaldo').textContent = saldoFmt;
+                document.getElementById('puntosDisplay').textContent = user.puntos || 0;
+            }
+            loadSaldo();
+        })();
+    </script>
+</body>
+</html>

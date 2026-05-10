@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - Cineteca</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; background: #f9f7f4; color: #222; }
+        .admin-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%); color: #d4af37; padding: 2rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.3); }
+        .sidebar-header { padding: 1.5rem; border-bottom: 2px solid #d4af37; text-align: center; }
+        .user-role { font-size: 0.85rem; background: rgba(212,175,55,0.2); padding: 0.5rem; border-radius: 5px; text-align: center; }
+        .sidebar-menu a { display: block; padding: 1rem 1.5rem; color: #d4af37; text-decoration: none; transition: all 0.3s; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: rgba(212,175,55,0.1); color: white; }
+        .main-content { flex: 1; margin-left: 280px; padding: 2rem; }
+        .header { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .content-section { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 2rem; display: none; }
+        .content-section.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #f0ebe5; }
+        .btn { padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 3px; }
+        .btn-primary { background: #d4af37; color: #1a0f08; }
+        .btn-secondary { background: #667eea; color: white; }
+        .btn-danger { background: #f56565; color: white; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .movie-img { width: 60px; height: 80px; object-fit: cover; border-radius: 4px; }
+                .stat-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 1.5rem; 
+        }
+        .stat-card { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            text-align: center; 
+        }
+        .stat-card h3 { 
+            font-size: 2.5rem; 
+            color: #d4af37; 
+            margin-bottom: 0.5rem; 
+        }
+       @media print {
+    /* 1. ESTA ES LA CLAVE PARA LOS COLORES */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* 2. Corregimos el error anterior:
+       Asegúrate de NO forzar fondo blanco en los elementos de las gráficas */
+    .stat-card, 
+    #dashboardPieChartAdmin, 
+    #dashboardBarChartAdmin, 
+    #topMoviesChartAdmin, 
+    #topFunctionsChartAdmin {
+        background-color: transparent !important; 
+        box-shadow: none !important;
+    }
+
+    /* Ocultar elementos de UI innecesarios */
+    .sidebar, .header, .btn, #ventasGenerarBtn, #ventasStatus {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+}
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🎞️ Cineteca</h2>
+                <div class="user-role"><span id="userRoleDisplay">Administrador</span></div>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" class="menu-link active" data-section="dashboard">📊 Dashboard</a></li>
+                <li><a href="#" class="menu-link" data-section="usuarios">👥 Usuarios</a></li>
+                <li><a href="#" class="menu-link" data-section="peliculas">🎬 Películas</a></li>
+                <li><a href="#" class="menu-link" data-section="salas">🎭 Salas</a></li>
+                <li><a href="#" class="menu-link" data-section="funciones">🕐 Funciones</a></li>
+                <li><a href="#" class="menu-link" data-section="ventas">💰 Registro de Ventas</a></li>
+                <li><a href="index.html">🏠 Inicio</a></li>
+                <li><a href="#" onclick="logout()">🚪 Cerrar Sesión</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Dashboard Administrador</h1>
+                <button onclick="logout()">Cerrar Sesión</button>
+            </div>
+
+                        <!-- DASHBOARD ADMIN (mejorado) -->
+<section id="dashboard" class="content-section active">
+    <h2>Panel de Control</h2>
+    
+    <div class="stat-grid">
+        <div class="stat-card">
+            <h3 id="totalPeliculas">0</h3>
+            <p>Películas</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="totalSalas">0</h3>
+            <p>Salas</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="totalFunciones">0</h3>
+            <p>Funciones Programadas</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="totalUsuarios">0</h3>
+            <p>Usuarios Registrados</p>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:1.5rem; margin-top:2rem;">
+        <div style="background:#f5fbf9; padding:1.8rem; border-radius:12px; border:1px solid #d6efe7;">
+            <h3 style="margin-top:0; color:#1f4f3f;">Películas con más ventas</h3>
+            <div id="topMoviesChartAdmin" style="margin-top:1rem;"></div>
+        </div>
+        
+        <div style="background:#f5fbf9; padding:1.8rem; border-radius:12px; border:1px solid #d6efe7;">
+            <h3 style="margin-top:0; color:#1f4f3f;">Funciones más populares</h3>
+            <div id="topFunctionsChartAdmin" style="margin-top:1rem;"></div>
+        </div>
+
+        <div style="background:#f5fbf9; padding:1.8rem; border-radius:12px; border:1px solid #d6efe7;">
+            <h3 style="margin-top:0; color:#1f4f3f;">Distribución de Ventas</h3>
+            <div style="display:flex; gap:1.5rem; align-items:flex-start; margin-top:1rem;">
+                <div id="dashboardPieChartAdmin" style="width:160px; height:160px; flex-shrink:0;"></div>
+                <div id="dashboardPieLegendAdmin" style="flex:1;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top:2rem;">
+        <div style="background:#f5fbf9; padding:1.8rem; border-radius:12px; border:1px solid #d6efe7;">
+            <h3 style="margin-top:0; color:#1f4f3f;">Top Películas por Ventas</h3>
+            <div id="dashboardBarChartAdmin" style="margin-top:1.2rem;"></div>
+        </div>
+    </div>
+</section>
+
+            <!-- USUARIOS -->
+            <section id="usuarios" class="content-section">
+                <h2>Gestión de Usuarios</h2>
+                <button class="btn btn-primary" onclick="newUser()">+ Nuevo Usuario</button>
+                <table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead>
+                    <tbody id="usuariosTable"></tbody>
+                </table>
+            </section>
+
+            <!-- PELÍCULAS -->
+            <section id="peliculas" class="content-section">
+                <h2>Administración de Películas</h2>
+                <button class="btn btn-primary" onclick="newPelicula()">+ Nueva Película</button>
+                <table><thead><tr><th>Imagen</th><th>Título</th><th>Género</th><th>Duración</th><th>Acciones</th></tr></thead>
+                    <tbody id="peliculasTable"></tbody>
+                </table>
+            </section>
+
+            <!-- SALAS -->
+            <section id="salas" class="content-section">
+                <h2>Gestión de Salas</h2>
+                <button class="btn btn-primary" onclick="newSala()">+ Nueva Sala</button>
+                <table><thead><tr><th>Nombre</th><th>Capacidad</th><th>Tecnología</th><th>Acciones</th></tr></thead>
+                    <tbody id="salasTable"></tbody>
+                </table>
+            </section>
+
+            <!-- FUNCIONES -->
+                       <!-- FUNCIONES -->
+            <section id="funciones" class="content-section">
+                <h2>Programar Funciones</h2>
+                <button class="btn btn-primary" onclick="newFuncion()">+ Nueva Función</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Película</th>
+                            <th>Sala</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="funcionesTable"></tbody>
+                </table>
+            </section>
+
+            <!-- VENTAS -->
+            <section id="ventas" class="content-section">
+                <h2>Registro de Ventas</h2>
+
+                <div style="display:flex; justify-content:flex-end; margin-bottom:1.2rem;">
+                    <button class="btn btn-primary" id="ventasGenerarBtn" type="button">Generar Reporte</button>
+                    <button class="btn btn-secondary" onclick="window.print()" type="button">🖨️ Imprimir</button>
+                </div>
+
+                <div id="ventasStatus" style="background:#f9f7f4; color:#666; padding:0.9rem 1rem; border-radius:8px; border:1px solid #e3d9ca; margin-bottom:1.2rem;">
+                    📊 Cargando registro de ventas...
+                </div>
+
+                <h3 style="margin-bottom:0.6rem;">Ventas por Película</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Película</th>
+                            <th>Boletos Vendidos</th>
+                            <th>Ingresos</th>
+                            <th>Participación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ventasPeliculaBody"></tbody>
+                </table>
+
+                <h3 style="margin-top:1.3rem; margin-bottom:0.6rem;">Ventas por Función</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Película</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Boletos Vendidos</th>
+                            <th>Ingresos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ventasFuncionBody"></tbody>
+                </table>
+
+                <div style="margin-top: 1.6rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:1rem;">
+                    <div style="background:#e6fffa; border-left:4px solid #48bb78; border-radius:8px; padding:1rem;">
+                        <h4 style="margin-bottom:0.4rem; color:#22543d;">Total Ingresos</h4>
+                        <h3 style="color:#22543d;">$<span id="ventasTotalIngresos">0.00</span></h3>
+                    </div>
+                    <div style="background:#e6fffa; border-left:4px solid #48bb78; border-radius:8px; padding:1rem;">
+                        <h4 style="margin-bottom:0.4rem; color:#22543d;">Boletos Vendidos</h4>
+                        <h3 style="color:#22543d;"><span id="ventasTotalBoletos">0</span></h3>
+                    </div>
+                    <div style="background:#e6fffa; border-left:4px solid #48bb78; border-radius:8px; padding:1rem;">
+                        <h4 style="margin-bottom:0.4rem; color:#22543d;">Precio Promedio</h4>
+                        <h3 style="color:#22543d;">$<span id="ventasPrecioPromedio">0.00</span></h3>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal Usuario -->
+    <div id="usuarioModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalUserTitle">Nuevo Usuario</h2>
+            <input type="hidden" id="editUserId">
+            <div class="form-group"><label>Nombre</label><input type="text" id="userName" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="userEmail" required></div>
+            <div class="form-group"><label>Rol</label><select id="userRole" required>
+                <option value="administrador">Administrador</option>
+                <option value="editor">Editor</option>
+                <option value="consultor">Consultor</option>
+            </select></div>
+            <div class="form-group" id="passwordGroup"><label>Contraseña</label><input type="password" id="userPassword"></div>
+            <button class="btn btn-primary" onclick="saveUser()">Guardar</button>
+            <button class="btn btn-secondary" onclick="closeModal('usuarioModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Película -->
+    <div id="peliculaModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalPeliculaTitle">Nueva Película</h2>
+            <input type="hidden" id="editPeliculaId">
+            <div class="form-group"><label>Título</label><input type="text" id="movieTitle" required></div>
+            <div class="form-group"><input type="number" id="movieYear" required></div>
+            <div class="form-group"><label>Género</label><input type="text" id="movieGenre" required></div>
+            <div class="form-group"><label>Duración (min)</label><input type="number" id="movieDuration" required></div>
+            <div class="form-group"><label>Imagen</label><input type="file" id="movieImage" accept="image/*"></div>
+            <div id="imagePreview" style="margin:10px 0;"></div>
+            <button class="btn btn-primary" onclick="savePelicula()">Guardar Película</button>
+            <button class="btn btn-secondary" onclick="closeModal('peliculaModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Sala -->
+    <div id="salaModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalSalaTitle">Nueva Sala</h2>
+            <input type="hidden" id="editSalaId">
+            <div class="form-group"><label>Nombre</label><input type="text" id="salaName" required></div>
+            <div class="form-group"><label>Capacidad</label><input type="number" id="salaCapacity" required></div>
+            <div class="form-group"><label>Tecnología</label><input type="text" id="salaTech" required></div>
+            <button class="btn btn-primary" onclick="saveSala()">Guardar</button>
+            <button class="btn btn-secondary" onclick="closeModal('salaModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Función -->
+    <div id="funcionModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalFuncionTitle">Nueva Función</h2>
+            <input type="hidden" id="editFuncionId">
+            <div class="form-group"><label>Película</label><select id="funcionPelicula" required></select></div>
+            <div class="form-group"><label>Sala</label><select id="funcionSala" required></select></div>
+            <div class="form-group"><label>Fecha</label><input type="date" id="funcionFecha" required></div>
+            <div class="form-group"><label>Hora</label><input type="time" id="funcionHora" required></div>
+            <div class="form-group"><label>Precio ($)</label><input type="number" step="0.01" id="funcionPrecio" value="15" required></div>
+            <button class="btn btn-primary" onclick="saveFuncion()">Guardar Función</button>
+            <button class="btn btn-secondary" onclick="closeModal('funcionModal')">Cancelar</button>
+        </div>
+    </div>
+
+
+
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Navegación
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.getElementById(link.dataset.section).classList.add('active');
+            });
+        });
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+
+
+       
+        // ====================== USUARIOS ======================
+        let editUserId = null;
+        async function loadUsuarios() {
+            const res = await fetch(`${API_URL}/api/usuarios`);
+            const data = await res.json();
+            document.getElementById('usuariosTable').innerHTML = data.map(u => `
+                <tr>
+                    <td>${u.nombre}</td>
+                    <td>${u.email}</td>
+                    <td><strong>${u.rol}</strong></td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editUser(${u.id})">Editar</button>
+                        <button class="btn btn-danger" onclick="deleteUser(${u.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function newUser() {
+            editUserId = null;
+            document.getElementById('modalUserTitle').textContent = 'Nuevo Usuario';
+            document.getElementById('passwordGroup').style.display = 'block';
+            openModal('usuarioModal');
+        }
+
+        async function editUser(id) {
+            editUserId = id;
+            document.getElementById('modalUserTitle').textContent = 'Editar Usuario';
+            const res = await fetch(`${API_URL}/api/usuarios`);
+            const usuarios = await res.json();
+            const user = usuarios.find(u => u.id === id);
+            if (!user) return;
+            document.getElementById('userName').value = user.nombre;
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userRole').value = user.rol;
+            document.getElementById('passwordGroup').style.display = 'none';
+            openModal('usuarioModal');
+        }
+
+        async function saveUser() {
+            const nombre = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const rol = document.getElementById('userRole').value;
+            const password = document.getElementById('userPassword').value;
+
+            let url = `${API_URL}/api/usuarios`;
+            let method = 'POST';
+            let body = { nombre, email, rol };
+            if (!editUserId) body.password = password;
+
+            if (editUserId) {
+                url = `${API_URL}/api/usuarios/${editUserId}`;
+                method = 'PUT';
+            }
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                alert(editUserId ? 'Usuario actualizado' : 'Usuario creado');
+                closeModal('usuarioModal');
+                loadUsuarios();
+            } else {
+                alert('Error al guardar usuario');
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('¿Eliminar usuario?')) return;
+            await fetch(`${API_URL}/api/usuarios/${id}`, { method: 'DELETE' });
+            loadUsuarios();
+        }
+
+        // ====================== PELÍCULAS ======================
+        let editPeliculaId = null;
+        async function loadPeliculas() {
+            const res = await fetch(`${API_URL}/api/peliculas`);
+            const data = await res.json();
+            let html = '';
+            data.forEach(p => {
+                const imgUrl = p.imagen_url || '/imagenes/default.jpg';
+                html += `
+                    <tr>
+                        <td><img src="${imgUrl}" class="movie-img" onerror="this.src='/imagenes/default.jpg'"></td>
+                        <td>${p.Titulo}</td>
+                        
+                        <td>${p.Genero || 'N/A'}</td>
+                        <td>${p.Duracion || 'N/A'} min</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editPelicula(${p.id})">Editar</button>
+                            <button class="btn btn-danger" onclick="deletePelicula(${p.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('peliculasTable').innerHTML = html;
+        }
+
+        function newPelicula() {
+            editPeliculaId = null;
+            document.getElementById('modalPeliculaTitle').textContent = 'Nueva Película';
+            document.getElementById('peliculaModal').querySelectorAll('input').forEach(i => i.value = '');
+            document.getElementById('imagePreview').innerHTML = '';
+            openModal('peliculaModal');
+        }
+
+        async function editPelicula(id) {
+            editPeliculaId = id;
+            document.getElementById('modalPeliculaTitle').textContent = 'Editar Película';
+            const res = await fetch(`${API_URL}/api/peliculas`);
+            const pelis = await res.json();
+            const p = pelis.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('movieTitle').value = p.Titulo;
+            
+            document.getElementById('movieGenre').value = p.Genero || '';
+            document.getElementById('movieDuration').value = p.Duracion || '';
+            document.getElementById('imagePreview').innerHTML = p.imagen_url ? `<img src="${p.imagen_url}" style="max-width:200px;border-radius:6px;">` : '';
+            openModal('peliculaModal');
+        }
+
+        async function savePelicula() {
+            const formData = new FormData();
+            formData.append('Titulo', document.getElementById('movieTitle').value);
+           
+            formData.append('Genero', document.getElementById('movieGenre').value);
+            formData.append('Duracion', document.getElementById('movieDuration').value);
+
+            const imageFile = document.getElementById('movieImage').files[0];
+            if (imageFile) formData.append('imagen', imageFile);
+
+            const method = editPeliculaId ? 'PUT' : 'POST';
+            const url = editPeliculaId ? `${API_URL}/api/peliculas/${editPeliculaId}` : `${API_URL}/api/peliculas`;
+
+            const res = await fetch(url, { method, body: formData });
+            if (res.ok) {
+                alert('Película guardada correctamente');
+                closeModal('peliculaModal');
+                loadPeliculas();
+            } else {
+                alert('Error al guardar película');
+            }
+        }
+
+        async function deletePelicula(id) {
+            if (!confirm('¿Eliminar película?')) return;
+            await fetch(`${API_URL}/api/peliculas/${id}`, { method: 'DELETE' });
+            loadPeliculas();
+        }
+
+        // ====================== SALAS ======================
+        let editSalaId = null;
+        async function loadSalas() {
+            const res = await fetch(`${API_URL}/api/salas`);
+            const data = await res.json();
+            document.getElementById('salasTable').innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.nombre}</td>
+                    <td>${s.capacidad}</td>
+                    <td>${s.tecnologia}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editSala(${s.id})">Editar</button>
+                        <button class="btn btn-danger" onclick="deleteSala(${s.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function newSala() {
+            editSalaId = null;
+            document.getElementById('modalSalaTitle').textContent = 'Nueva Sala';
+            openModal('salaModal');
+        }
+
+        async function editSala(id) {
+            editSalaId = id;
+            document.getElementById('modalSalaTitle').textContent = 'Editar Sala';
+            const res = await fetch(`${API_URL}/api/salas`);
+            const salas = await res.json();
+            const s = salas.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('salaName').value = s.nombre;
+            document.getElementById('salaCapacity').value = s.capacidad;
+            document.getElementById('salaTech').value = s.tecnologia;
+            openModal('salaModal');
+        }
+
+        async function saveSala() {
+            const data = {
+                nombre: document.getElementById('salaName').value,
+                capacidad: parseInt(document.getElementById('salaCapacity').value),
+                tecnologia: document.getElementById('salaTech').value
+            };
+            const method = editSalaId ? 'PUT' : 'POST';
+            const url = editSalaId ? `${API_URL}/api/salas/${editSalaId}` : `${API_URL}/api/salas`;
+            await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+            alert('Sala guardada correctamente');
+            closeModal('salaModal');
+            loadSalas();
+        }
+
+        async function deleteSala(id) {
+            if (!confirm('¿Eliminar sala?')) return;
+            await fetch(`${API_URL}/api/salas/${id}`, { method: 'DELETE' });
+            loadSalas();
+        }
+
+        // ====================== FUNCIONES ======================
+                // ====================== FUNCIONES ======================
+               // ====================== FUNCIONES ======================
+        async function loadFunciones() {
+            const res = await fetch(`${API_URL}/api/funciones`);
+            const data = await res.json();
+            let html = '';
+            data.forEach(f => {
+                html += `
+                    <tr>
+                        <td>${f.peliculaTitulo || 'N/A'}</td>
+                        <td>${f.salaNombre || 'N/A'}</td>
+                        <td>${f.fecha}</td>
+                        <td>${f.hora}</td>
+                        <td>$${parseFloat(f.precio || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteFuncion(${f.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('funcionesTable').innerHTML = html;
+        }
+
+        function newFuncion() {
+            document.getElementById('modalFuncionTitle').textContent = 'Nueva Función';
+            loadPeliculasForFuncion();
+            loadSalasForFuncion();
+            // Limpiar campos
+            document.getElementById('funcionFecha').value = '';
+            document.getElementById('funcionHora').value = '';
+            document.getElementById('funcionPrecio').value = '15';
+            openModal('funcionModal');
+        }
+
+        async function loadPeliculasForFuncion() {
+            const res = await fetch(`${API_URL}/api/peliculas`);
+            const pelis = await res.json();
+            const select = document.getElementById('funcionPelicula');
+            select.innerHTML = '<option value="">Selecciona película</option>';
+            pelis.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.Titulo;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadSalasForFuncion() {
+            const res = await fetch(`${API_URL}/api/salas`);
+            const salas = await res.json();
+            const select = document.getElementById('funcionSala');
+            select.innerHTML = '<option value="">Selecciona sala</option>';
+            salas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.nombre;
+                select.appendChild(opt);
+            });
+        }
+
+        async function saveFuncion() {
+            const peliculaId = document.getElementById('funcionPelicula').value;
+            const salaId = document.getElementById('funcionSala').value;
+            const fecha = document.getElementById('funcionFecha').value;
+            const hora = document.getElementById('funcionHora').value;
+            const precio = parseFloat(document.getElementById('funcionPrecio').value);
+
+            if (!peliculaId || !salaId || !fecha || !hora) {
+                alert("Por favor completa todos los campos");
+                return;
+            }
+
+            const data = { peliculaId, salaId, fecha, hora, precio };
+
+            const res = await fetch(`${API_URL}/api/funciones`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert('Función creada correctamente');
+                closeModal('funcionModal');
+                loadFunciones();
+            } else {
+                alert('Error al crear la función');
+            }
+        }
+
+        async function deleteFuncion(id) {
+            if (!confirm('¿Eliminar esta función?')) return;
+            await fetch(`${API_URL}/api/funciones/${id}`, { method: 'DELETE' });
+            loadFunciones();
+        }
+
+        // ====================== REPORTES DE VENTAS (ADMIN) ======================
+        function formatMoney(value) {
+            const num = Number(value || 0);
+            return num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function loadVentasReport() {
+            const statusEl = document.getElementById('ventasStatus');
+            const peliculasBody = document.getElementById('ventasPeliculaBody');
+            const funcionesBody = document.getElementById('ventasFuncionBody');
+            const totalIngresosEl = document.getElementById('ventasTotalIngresos');
+            const totalBoletosEl = document.getElementById('ventasTotalBoletos');
+            const precioPromedioEl = document.getElementById('ventasPrecioPromedio');
+            if (!statusEl || !peliculasBody || !funcionesBody) return;
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                statusEl.textContent = '⚠️ Debes iniciar sesión como administrador para ver este reporte';
+                return;
+            }
+
+            statusEl.textContent = '📊 Cargando registro de ventas...';
+
+            try {
+                const url = `${API_URL}/api/reportes/ventas`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    statusEl.textContent = `❌ ${data.error || 'No se pudo cargar el reporte'}`;
+                    return;
+                // ... dentro de loadVentasReport() después de cargar los datos ...
+statusEl.textContent = `📊 Registro de ventas cargado.`;
+
+// Opcional: Mostrar el botón de imprimir solo cuando hay datos
+// document.getElementById('btnImprimir').style.display = 'inline-block';
+                }
+
+                const totalBoletos = Number(data?.resumen?.boletosVendidos || 0);
+                const totalIngresos = Number(data?.resumen?.ingresosTotales || 0);
+                const precioPromedio = Number(data?.resumen?.precioPromedio || 0);
+                const porPelicula = Array.isArray(data?.porPelicula) ? data.porPelicula : [];
+                const porFuncion = Array.isArray(data?.porFuncion) ? data.porFuncion : [];
+
+                totalBoletosEl.textContent = totalBoletos.toLocaleString('es-MX');
+                totalIngresosEl.textContent = formatMoney(totalIngresos);
+                precioPromedioEl.textContent = formatMoney(precioPromedio);
+
+                if (porPelicula.length === 0) {
+                    peliculasBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">Sin ventas en el rango seleccionado</td></tr>';
+                } else {
+                    peliculasBody.innerHTML = porPelicula.slice(0, 10).map((row, idx) => {
+                        const pct = totalBoletos > 0 ? ((Number(row.boletosVendidos || 0) * 100) / totalBoletos).toFixed(1) : '0.0';
+                        return `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td>${row.pelicula}</td>
+                                <td>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</td>
+                                <td>$${formatMoney(row.ingresos)}</td>
+                                <td>${pct}%</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                if (porFuncion.length === 0) {
+                    funcionesBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">Sin ventas por función en el rango seleccionado</td></tr>';
+                } else {
+                    funcionesBody.innerHTML = porFuncion.slice(0, 30).map((row) => `
+                        <tr>
+                            <td>${row.pelicula}</td>
+                            <td>${row.fecha}</td>
+                            <td>${row.hora}</td>
+                            <td>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</td>
+                            <td>$${formatMoney(row.ingresos)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                statusEl.textContent = `📊 Registro de ventas (completo) — ${totalBoletos.toLocaleString('es-MX')} boletos vendidos`;
+            } catch (e) {
+                statusEl.textContent = '❌ Error de conexión al cargar el reporte de ventas';
+            }
+        }
+                // ====================== DASHBOARD ======================
+       async function loadDashboardStats() {
+    try {
+        const [pRes, sRes, fRes, uRes] = await Promise.all([
+            fetch(`${API_URL}/api/peliculas`),
+            fetch(`${API_URL}/api/salas`),
+            fetch(`${API_URL}/api/funciones`),
+            fetch(`${API_URL}/api/usuarios`)
+        ]);
+
+        const pelis = await pRes.json();
+        const salas = await sRes.json();
+        const funciones = await fRes.json();
+        const usuarios = await uRes.json();
+
+        document.getElementById('totalPeliculas').textContent = pelis.length;
+        document.getElementById('totalSalas').textContent = salas.length;
+        document.getElementById('totalFunciones').textContent = funciones.length;
+        document.getElementById('totalUsuarios').textContent = usuarios.length;
+
+        // Cargar gráficas de ventas
+        await loadDashboardSalesSummary();
+    } catch(e) {
+        console.error("Error en dashboard admin", e);
+    }
+}
+
+async function loadDashboardSalesSummary() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/reportes/ventas`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        const totalBoletos = Number(data?.resumen?.boletosVendidos || 0);
+
+        renderTopMoviesChart(data.porPelicula || [], 'topMoviesChartAdmin');
+        renderTopFunctionsChart(data.porFuncion || [], 'topFunctionsChartAdmin');
+        renderDashboardPieChart(data.porPelicula || [], totalBoletos, 'dashboardPieChartAdmin', 'dashboardPieLegendAdmin');
+        renderDashboardBarChart(data.porPelicula || [], 'dashboardBarChartAdmin');
+    } catch(e) {
+        console.error(e);
+    }
+}
+<!-- FUNCIONES DE GRÁFICAS (comunes) -->
+function formatMoney(value) {
+    return Number(value || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderTopMoviesChart(porPelicula, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!porPelicula || porPelicula.length === 0) {
+        container.innerHTML = '<p style="color:#777; text-align:center;">No hay ventas registradas.</p>';
+        return;
+    }
+
+    const topMovies = porPelicula.slice(0, 5);
+    const maxCantidad = Math.max(...topMovies.map(row => Number(row.boletosVendidos || 0)), 1);
+
+    container.innerHTML = topMovies.map(row => {
+        const width = Math.round((Number(row.boletosVendidos || 0) / maxCantidad) * 100);
+        return `
+            <div style="margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px;">
+                    <span>${row.pelicula}</span>
+                    <span>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')} boletos</span>
+                </div>
+                <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:14px;">
+                    <div style="width:${width}%; background:#38a169; height:100%;"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderTopFunctionsChart(porFuncion, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!porFuncion || porFuncion.length === 0) {
+        container.innerHTML = '<p style="color:#777; text-align:center;">No hay funciones con ventas.</p>';
+        return;
+    }
+
+    const topFuncs = porFuncion.slice(0, 5);
+    const maxVentas = Math.max(...topFuncs.map(row => Number(row.boletosVendidos || 0)), 1);
+
+    container.innerHTML = topFuncs.map(row => {
+        const width = Math.round((Number(row.boletosVendidos || 0) / maxVentas) * 100);
+        return `
+            <div style="margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px;">
+                    <span>${row.pelicula} <small>${row.fecha} ${row.hora}</small></span>
+                    <span>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</span>
+                </div>
+                <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:14px;">
+                    <div style="width:${width}%; background:#3182ce; height:100%;"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderDashboardPieChart(porPelicula, totalBoletos, containerId, legendId) {
+    const chartEl = document.getElementById(containerId);
+    const legendEl = document.getElementById(legendId);
+    if (!chartEl || !legendEl) return;
+
+    if (!porPelicula.length || totalBoletos === 0) {
+        chartEl.innerHTML = '<p style="color:#777;text-align:center;">Sin datos</p>';
+        legendEl.innerHTML = '';
+        return;
+    }
+
+    const topMovies = porPelicula.slice(0, 5);
+    const colors = ['#38a169', '#3182ce', '#e53e3e', '#d69e2e', '#805ad5'];
+    let currentAngle = 0;
+    const gradients = [];
+    const legendItems = [];
+
+    topMovies.forEach((movie, idx) => {
+        const boletos = Number(movie.boletosVendidos || 0);
+        const percentage = (boletos / totalBoletos) * 100;
+        const angle = (percentage / 100) * 360;
+
+        if (percentage > 0) {
+            gradients.push(`${colors[idx]} ${currentAngle}deg ${currentAngle + angle}deg`);
+            legendItems.push(`
+                <div style="display:flex; align-items:center; margin-bottom:6px;">
+                    <div style="width:12px; height:12px; background:${colors[idx]}; border-radius:50%; margin-right:8px;"></div>
+                    <span style="font-size:13px;">${movie.pelicula} (${percentage.toFixed(1)}%)</span>
+                </div>
+            `);
+        }
+        currentAngle += angle;
+    });
+
+    chartEl.style.background = `conic-gradient(${gradients.join(', ')})`;
+    chartEl.style.width = '160px';
+    chartEl.style.height = '160px';
+    chartEl.style.borderRadius = '50%';
+    legendEl.innerHTML = legendItems.join('');
+}
+
+function renderDashboardBarChart(porPelicula, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!porPelicula.length) {
+        container.innerHTML = '<p style="color:#777;">No hay datos de ventas.</p>';
+        return;
+    }
+
+    const topMovies = porPelicula.slice(0, 5);
+    const maxBoletos = Math.max(...topMovies.map(row => Number(row.boletosVendidos || 0)), 1);
+    const colors = ['#38a169', '#3182ce', '#e53e3e', '#d69e2e', '#805ad5'];
+
+    container.innerHTML = topMovies.map((movie, idx) => {
+        const boletos = Number(movie.boletosVendidos || 0);
+        const width = Math.round((boletos / maxBoletos) * 100);
+        return `
+            <div style="margin-bottom:18px;">
+                <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:6px; font-size:14px;">
+                    <span>${movie.pelicula}</span>
+                    <span>${boletos.toLocaleString('es-MX')} boletos</span>
+                </div>
+                <div style="background:#e2e8f0; border-radius:999px; overflow:hidden; height:20px;">
+                    <div style="width:${width}%; background:${colors[idx]}; height:100%;"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+        // Inicializar
+       window.onload = () => {
+    loadDashboardStats();
+    loadUsuarios();
+    loadPeliculas();
+    loadSalas();
+    loadFunciones();
+
+    const ventasGenerarBtn = document.getElementById('ventasGenerarBtn');
+    if (ventasGenerarBtn) {
+        ventasGenerarBtn.addEventListener('click', loadVentasReport);
+    }
+
+    document.querySelectorAll('.menu-link').forEach(link => {
+        if (link.dataset.section === 'ventas') {
+            link.addEventListener('click', loadVentasReport);
+        }
+    });
+};
+
+        function logout() {
+            if (confirm('¿Cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

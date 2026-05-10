@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Consultor - Cineteca</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; background: #f9f7f4; color: #222; }
+        
+        .consultor-container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); 
+            color: white; 
+            padding: 2rem 0; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3); 
+        }
+        .sidebar-header { 
+            padding: 1.5rem; 
+            text-align: center; 
+            border-bottom: 2px solid rgba(255,255,255,0.2); 
+        }
+        .user-role { 
+            font-size: 0.85rem; 
+            background: rgba(255,255,255,0.2); 
+            padding: 0.5rem; 
+            border-radius: 5px; 
+        }
+
+        .sidebar-menu a { 
+            display: block; 
+            padding: 1rem 1.5rem; 
+            color: rgba(255,255,255,0.9); 
+            text-decoration: none; 
+            transition: all 0.3s; 
+        }
+        .sidebar-menu a:hover, 
+        .sidebar-menu a.active { 
+            background: rgba(255,255,255,0.1); 
+            color: white; 
+            border-left: 4px solid white; 
+        }
+
+        .main-content { flex: 1; margin-left: 280px; padding: 2rem; }
+
+        .header { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 2rem; 
+        }
+
+        .content-section { 
+            display: none; 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            margin-bottom: 2rem; 
+        }
+        .content-section.active { display: block; }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f0ebe5; }
+
+        .seat { 
+            width: 34px; height: 34px; margin: 4px; 
+            display: inline-flex; align-items: center; justify-content: center; 
+            font-size: 11px; border-radius: 4px; font-weight: bold; color: white; 
+        }
+        .seat.available { background: #48bb78; }
+        .seat.taken { background: #f56565; }
+
+        .stat-card { 
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); 
+            color: white; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            text-align: center; 
+        }
+        .stat-card h3 { font-size: 2.4rem; margin-bottom: 0.5rem; }
+
+        .btn { 
+            padding: 8px 16px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .btn-primary { background: #48bb78; color: white; }
+        .btn-primary:hover { background: #38a169; }
+    </style>
+</head>
+<body>
+    <div class="consultor-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🎞️ Cineteca</h2>
+                <div class="user-role"><span id="userRoleDisplay">Consultor</span></div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li style="margin-top: 1rem;"><a href="#" class="menu-link active" data-section="cartelera">🎬 Cartelera</a></li>
+                <li><a href="#" class="menu-link" data-section="funciones">🕐 Funciones</a></li>
+                <li><a href="#" class="menu-link" data-section="disponibilidad">💺 Disponibilidad</a></li>
+                <li><a href="#" class="menu-link" data-section="ventas">💰 Ventas</a></li>
+
+                <!-- Botón de Inicio (como en el Editor) -->
+                <li style="margin-top: 2rem;">
+                    <a href="index.html" style="color:#d4af37; font-weight:bold; background:rgba(255,255,255,0.1);">
+                        🏠 Inicio
+                    </a>
+                </li>
+
+                <li style="margin-top: 1rem;">
+                    <a href="#" onclick="logout()" style="color:white;">🚪 Cerrar Sesión</a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Cartelera Consultor</h1>
+                <button class="btn btn-primary" onclick="logout()">Cerrar Sesión</button>
+            </div>
+
+            <!-- CARTELERA -->
+            <section id="cartelera" class="content-section active">
+                <h2>Cartelera Actual</h2>
+                <table>
+                    <thead>
+                        <tr><th>Título</th><th>Género</th><th>Duración</th></tr>
+                    </thead>
+                    <tbody id="peliculasTable"></tbody>
+                </table>
+            </section>
+
+            <!-- FUNCIONES -->
+            <section id="funciones" class="content-section">
+                <h2>Funciones Programadas</h2>
+                <table>
+                    <thead>
+                        <tr><th>Película</th><th>Sala</th><th>Fecha</th><th>Hora</th><th>Precio</th></tr>
+                    </thead>
+                    <tbody id="funcionesTable"></tbody>
+                </table>
+            </section>
+
+            <!-- DISPONIBILIDAD -->
+            <section id="disponibilidad" class="content-section">
+                <h2>Disponibilidad de Asientos</h2>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label><strong>Película:</strong></label>
+                    <select id="availMovie" onchange="loadFunctionsForMovie()" style="width:100%; padding:10px; margin:8px 0;"></select>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <label><strong>Función:</strong></label>
+                    <select id="availFunction" onchange="loadSeatMap()" style="width:100%; padding:10px; margin:8px 0;"></select>
+                </div>
+
+                <div style="text-align:center; margin:15px 0;">
+                    <span style="color:#48bb78;">● Disponible</span> | 
+                    <span style="color:#f56565;">● Vendido</span>
+                </div>
+
+                <div id="seatMap" style="display:grid; grid-template-columns:repeat(10,38px); gap:6px; margin:20px auto; justify-content:center; max-width:450px;"></div>
+
+                <div style="background:#f0f8f0; padding:15px; border-radius:8px; margin-top:20px;">
+                    <h4>Resumen de la Función</h4>
+                    <p id="summary">Total: <strong>80</strong> | Vendidos: <strong id="soldCount">0</strong> | Disponibles: <strong id="availableCount">80</strong></p>
+                </div>
+            </section>
+
+            <!-- VENTAS -->
+            <section id="ventas" class="content-section">
+                <h2>💰 Registro de Ventas</h2>
+                <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; margin-bottom:1.2rem;">
+                    <p style="margin:0; color:#555;">Consulta ventas y boletos vendidos en la Cineteca.</p>
+                </div>
+                <div id="ventasStatus" style="background:#f9f7f4; color:#666; padding:0.9rem 1rem; border-radius:8px; border:1px solid #e3d9ca; margin-bottom:1.2rem;">📊 Abre la sección para cargar el reporte de ventas.</div>
+
+                <h3 style="margin-bottom:0.6rem;">Ventas por Película</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Película</th>
+                            <th>Boletos Vendidos</th>
+                            <th>Ingresos</th>
+                            <th>Participación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ventasPeliculaBody"></tbody>
+                </table>
+
+                <h3 style="margin-top:1.3rem; margin-bottom:0.6rem;">Ventas por Función</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Película</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Boletos Vendidos</th>
+                            <th>Ingresos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ventasFuncionBody"></tbody>
+                </table>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-top:1.8rem;">
+                    <div style="background:#e9fffb; padding:1.2rem; border-radius:10px; border:1px solid #bde7db;">
+                        <p style="margin:0 0 .5rem; color:#22543d; font-weight:bold;">Total Ingresos</p>
+                        <h3 style="color:#22543d;">$<span id="ventasTotalIngresos">0.00</span></h3>
+                    </div>
+                    <div style="background:#e9fffb; padding:1.2rem; border-radius:10px; border:1px solid #bde7db;">
+                        <p style="margin:0 0 .5rem; color:#22543d; font-weight:bold;">Boletos Vendidos</p>
+                        <h3 style="color:#22543d;"><span id="ventasTotalBoletos">0</span></h3>
+                    </div>
+                    <div style="background:#e9fffb; padding:1.2rem; border-radius:10px; border:1px solid #bde7db;">
+                        <p style="margin:0 0 .5rem; color:#22543d; font-weight:bold;">Precio Promedio</p>
+                        <h3 style="color:#22543d;">$<span id="ventasPrecioPromedio">0.00</span></h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BILLETERA -->
+            <section id="billetera" class="content-section">
+                <h2>💳 Mi Billetera Virtual</h2>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; margin-bottom:2rem;">
+                    <div style="background:linear-gradient(135deg,#2c1810,#4a2617);color:white;padding:1.5rem;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.85rem;opacity:0.7;margin-bottom:0.3rem;">Saldo disponible</div>
+                        <div style="font-size:2.5rem;font-weight:bold;color:#d4af37;">$<span id="dashSaldo">0.00</span></div>
+                        <div style="font-size:0.9rem;opacity:0.8;margin-top:0.4rem;">⭐ <span id="dashPuntos">0</span> puntos</div>
+                    </div>
+                    <div style="background:#e6fffa;padding:1.5rem;border-radius:12px;border-left:4px solid #48bb78;">
+                        <h4 style="color:#22543d;margin-bottom:0.5rem;">¿Cómo funciona?</h4>
+                        <p style="color:#22543d;font-size:0.9rem;line-height:1.6;">
+                            Recarga saldo virtual y úsalo para comprar boletos en la cartelera.
+                            También puedes canjear 5,000 puntos por 1 boleto gratis.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background:white;border:1px solid #e8e0d5;border-radius:12px;padding:1.8rem;max-width:480px;">
+                    <h3 style="color:#2c1810;margin-bottom:1.2rem;border-bottom:2px solid #d4af37;padding-bottom:0.6rem;">Recargar Saldo</h3>
+
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.7rem;margin-bottom:1.2rem;">
+                        <button class="btn btn-primary" onclick="selectDashAmount(50)">$50</button>
+                        <button class="btn btn-primary" onclick="selectDashAmount(100)">$100</button>
+                        <button class="btn btn-primary" onclick="selectDashAmount(200)">$200</button>
+                        <button class="btn btn-primary" onclick="selectDashAmount(500)">$500</button>
+                    </div>
+
+                    <div style="display:flex;gap:0.8rem;align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.88rem;color:#666;font-weight:bold;display:block;margin-bottom:0.4rem;">Monto personalizado ($)</label>
+                            <input type="number" id="dashMontoInput" min="1" max="10000" placeholder="Ej: 350"
+                                style="width:100%;padding:0.7rem;border:2px solid #ddd;border-radius:8px;font-size:1rem;font-family:Georgia,serif;"
+                                onfocus="this.style.borderColor='#d4af37'" onblur="this.style.borderColor='#ddd'">
+                        </div>
+                        <button class="btn btn-primary" id="dashRechargeBtn" onclick="dashRecargar()" style="white-space:nowrap;padding:0.7rem 1.2rem;">
+                            ➕ Recargar
+                        </button>
+                    </div>
+
+                    <div id="dashAlert" style="display:none;margin-top:1rem;padding:0.8rem 1rem;border-radius:6px;font-size:0.9rem;"></div>
+
+                    <div style="background:#fffbec;border-left:4px solid #d4af37;padding:0.8rem 1rem;border-radius:6px;color:#7a5c00;font-size:0.87rem;margin-top:1rem;">
+                        💡 Este es saldo virtual de prueba. Se descuenta al comprar boletos.
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Navegación entre secciones
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                const sectionId = link.dataset.section;
+                document.getElementById(sectionId).classList.add('active');
+                document.getElementById('pageTitle').textContent = link.textContent.trim();
+
+                if (sectionId === 'ventas') {
+                    loadVentasReport();
+                }
+                if (sectionId === 'billetera') {
+                    loadDashWallet();
+                }
+            });
+        });
+
+        async function loadPeliculas() {
+            try {
+                const res = await fetch(`${API_URL}/api/peliculas`);
+                const data = await res.json();
+                document.getElementById('peliculasTable').innerHTML = data.map(p => `
+                    <tr>
+                        <td>${p.Titulo}</td>
+                       
+                        <td>${p.Genero || '-'}</td>
+                        <td>${p.Duracion || '-'} min</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Error cargando películas", e);
+            }
+        }
+
+        async function loadFunciones() {
+            try {
+                const res = await fetch(`${API_URL}/api/funciones`);
+                const data = await res.json();
+                document.getElementById('funcionesTable').innerHTML = data.map(f => `
+                    <tr>
+                        <td>${f.peliculaTitulo || 'N/A'}</td>
+                        <td>${f.salaNombre || 'N/A'}</td>
+                        <td>${f.fecha}</td>
+                        <td>${f.hora}</td>
+                        <td>$${f.precio}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Error cargando funciones", e);
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const [pelisRes, funcsRes] = await Promise.all([
+                    fetch(`${API_URL}/api/peliculas`),
+                    fetch(`${API_URL}/api/funciones`)
+                ]);
+
+                const peliculas = await pelisRes.json();
+                const funciones = await funcsRes.json();
+                const totalFunciones = funciones.length;
+
+                document.getElementById('totalPeliculas').textContent = peliculas.length;
+                document.getElementById('totalFunciones').textContent = totalFunciones;
+
+                await loadDashboardSalesSummary(totalFunciones);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadDashboardSalesSummary(totalFunciones = 0) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/reportes/ventas`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const totalBoletos = Number(data?.resumen?.boletosVendidos || 0);
+                const totalIngresos = Number(data?.resumen?.ingresosTotales || 0);
+                const ocupacion = totalFunciones > 0 ? Math.round((totalBoletos / (totalFunciones * 80)) * 100) : 0;
+
+                document.getElementById('totalBoletos').textContent = totalBoletos.toLocaleString('es-MX');
+                document.getElementById('totalIngresos').textContent = `$${formatMoney(totalIngresos)}`;
+                document.getElementById('ocupacionPromedio').textContent = `${ocupacion}%`;
+
+                renderTopMoviesChart(Array.isArray(data?.porPelicula) ? data.porPelicula : [], totalBoletos);
+                renderTopFunctionsChart(Array.isArray(data?.porFuncion) ? data.porFuncion : []);
+                renderDashboardPieChart(Array.isArray(data?.porPelicula) ? data.porPelicula : [], totalBoletos);
+                renderDashboardBarChart(Array.isArray(data?.porPelicula) ? data.porPelicula : []);
+            } catch (e) {
+                console.error('Error cargando métricas de ventas', e);
+            }
+        }
+
+        function renderTopMoviesChart(porPelicula, totalBoletos) {
+            const container = document.getElementById('topMoviesChart');
+            if (!container) return;
+
+            if (!porPelicula.length) {
+                container.innerHTML = '<p style="color:#777;">No hay ventas registradas para mostrar.</p>';
+                return;
+            }
+
+            const topMovies = porPelicula.slice(0, 3);
+            const maxCantidad = Math.max(...topMovies.map(row => Number(row.boletosVendidos || 0)), 1);
+
+            container.innerHTML = topMovies.map(row => {
+                const width = Math.round((Number(row.boletosVendidos || 0) / maxCantidad) * 100);
+                return `
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px;">
+                            <span>${row.pelicula}</span>
+                            <span>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')} boletos</span>
+                        </div>
+                        <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:14px;">
+                            <div style="width:${width}%; background:#38a169; height:100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTopFunctionsChart(porFuncion) {
+            const container = document.getElementById('topFunctionsChart');
+            if (!container) return;
+
+            if (!porFuncion.length) {
+                container.innerHTML = '<p style="color:#777;">No hay funciones con ventas registradas.</p>';
+                return;
+            }
+
+            const topFuncs = porFuncion.slice(0, 3);
+            const maxVentas = Math.max(...topFuncs.map(row => Number(row.boletosVendidos || 0)), 1);
+
+            container.innerHTML = topFuncs.map(row => {
+                const width = Math.round((Number(row.boletosVendidos || 0) / maxVentas) * 100);
+                return `
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px;">
+                            <span>${row.pelicula} ${row.fecha} ${row.hora}</span>
+                            <span>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</span>
+                        </div>
+                        <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:14px;">
+                            <div style="width:${width}%; background:#38a169; height:100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Disponibilidad
+        async function loadMoviesForAvailability() {
+            try {
+                const res = await fetch(`${API_URL}/api/peliculas`);
+                const movies = await res.json();
+                const select = document.getElementById('availMovie');
+                select.innerHTML = '<option value="">-- Selecciona una película --</option>';
+                movies.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.Titulo;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("Error cargando películas", e);
+            }
+        }
+
+        async function loadFunctionsForMovie() {
+            const movieId = document.getElementById('availMovie').value;
+            if (!movieId) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/funciones`);
+                const allFuncs = await res.json();
+                const funcs = allFuncs.filter(f => f.peliculaId == movieId);
+
+                const select = document.getElementById('availFunction');
+                select.innerHTML = '<option value="">-- Selecciona una función --</option>';
+
+                funcs.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.textContent = `${f.fecha} ${f.hora} - ${f.salaNombre || 'Sala desconocida'}`;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadSeatMap() {
+            const funcionId = document.getElementById('availFunction').value;
+            if (!funcionId) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/funciones/${funcionId}/asientos-ocupados`);
+                const data = await res.json();
+                const occupied = new Set(data.asientos || []);
+
+                const seatMap = document.getElementById('seatMap');
+                seatMap.innerHTML = '';
+
+                let sold = 0;
+                const rows = ['A','B','C','D','E','F','G','H'];
+
+                rows.forEach(row => {
+                    for (let col = 1; col <= 10; col++) {
+                        const seat = `${row}${col}`;
+                        const el = document.createElement('div');
+                        el.className = `seat ${occupied.has(seat) ? 'taken' : 'available'}`;
+                        el.textContent = seat;
+                        seatMap.appendChild(el);
+                        if (occupied.has(seat)) sold++;
+                    }
+                });
+
+                document.getElementById('soldCount').textContent = sold;
+                document.getElementById('availableCount').textContent = 80 - sold;
+            } catch (e) {
+                console.error("Error cargando mapa de asientos", e);
+            }
+        }
+
+        function formatMoney(value) {
+            const num = Number(value || 0);
+            return num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function loadVentasReport() {
+            const statusEl = document.getElementById('ventasStatus');
+            const peliculasBody = document.getElementById('ventasPeliculaBody');
+            const funcionesBody = document.getElementById('ventasFuncionBody');
+            const totalIngresosEl = document.getElementById('ventasTotalIngresos');
+            const totalBoletosEl = document.getElementById('ventasTotalBoletos');
+            const precioPromedioEl = document.getElementById('ventasPrecioPromedio');
+            if (!statusEl || !peliculasBody || !funcionesBody) return;
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                statusEl.textContent = '⚠️ Debes iniciar sesión para ver el reporte de ventas';
+                return;
+            }
+
+            statusEl.textContent = '📊 Cargando reporte de ventas...';
+            try {
+                const response = await fetch(`${API_URL}/api/reportes/ventas`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    statusEl.textContent = `❌ ${data.error || 'No se pudo cargar el reporte'}`;
+                    return;
+                }
+
+                const totalBoletos = Number(data?.resumen?.boletosVendidos || 0);
+                const totalIngresos = Number(data?.resumen?.ingresosTotales || 0);
+                const precioPromedio = Number(data?.resumen?.precioPromedio || 0);
+                const porPelicula = Array.isArray(data?.porPelicula) ? data.porPelicula : [];
+                const porFuncion = Array.isArray(data?.porFuncion) ? data.porFuncion : [];
+
+                totalBoletosEl.textContent = totalBoletos.toLocaleString('es-MX');
+                totalIngresosEl.textContent = formatMoney(totalIngresos);
+                precioPromedioEl.textContent = formatMoney(precioPromedio);
+
+                if (porPelicula.length === 0) {
+                    peliculasBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">Sin ventas registradas</td></tr>';
+                } else {
+                    peliculasBody.innerHTML = porPelicula.slice(0, 10).map((row, idx) => {
+                        const pct = totalBoletos > 0 ? ((Number(row.boletosVendidos || 0) * 100) / totalBoletos).toFixed(1) : '0.0';
+                        return `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td>${row.pelicula}</td>
+                                <td>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</td>
+                                <td>$${formatMoney(row.ingresos)}</td>
+                                <td>${pct}%</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                if (porFuncion.length === 0) {
+                    funcionesBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">Sin ventas por función registradas</td></tr>';
+                } else {
+                    funcionesBody.innerHTML = porFuncion.slice(0, 30).map(row => `
+                        <tr>
+                            <td>${row.pelicula}</td>
+                            <td>${row.fecha}</td>
+                            <td>${row.hora}</td>
+                            <td>${Number(row.boletosVendidos || 0).toLocaleString('es-MX')}</td>
+                            <td>$${formatMoney(row.ingresos)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                statusEl.textContent = `📊 Reporte de ventas cargado — ${totalBoletos.toLocaleString('es-MX')} boletos vendidos`;
+            } catch (e) {
+                statusEl.textContent = '❌ Error de conexión al cargar el reporte de ventas';
+                console.error('Error cargando reporte de ventas', e);
+            }
+        }
+
+        function renderDashboardPieChart(porPelicula, totalBoletos) {
+            const chartEl = document.getElementById('dashboardPieChart');
+            const legendEl = document.getElementById('dashboardPieLegend');
+            if (!chartEl || !legendEl) return;
+
+            if (!porPelicula.length || totalBoletos === 0) {
+                chartEl.innerHTML = '<p style="color:#777; text-align:center; font-size:12px;">Sin datos</p>';
+                legendEl.innerHTML = '';
+                return;
+            }
+
+            const topMovies = porPelicula.slice(0, 5); // Top 5 películas
+            const colors = ['#38a169', '#3182ce', '#e53e3e', '#d69e2e', '#805ad5'];
+
+            let currentAngle = 0;
+            const gradients = [];
+            const legendItems = [];
+
+            topMovies.forEach((movie, idx) => {
+                const boletos = Number(movie.boletosVendidos || 0);
+                const percentage = (boletos / totalBoletos) * 100;
+                const angle = (percentage / 100) * 360;
+
+                if (percentage > 0) {
+                    gradients.push(`${colors[idx]} ${currentAngle}deg ${currentAngle + angle}deg`);
+                    legendItems.push(`
+                        <div style="display:flex; align-items:center; margin-bottom:6px;">
+                            <div style="width:10px; height:10px; background:${colors[idx]}; border-radius:50%; margin-right:6px;"></div>
+                            <span style="font-size:11px; color:#555;">${movie.pelicula} (${percentage.toFixed(1)}%)</span>
+                        </div>
+                    `);
+                }
+
+                currentAngle += angle;
+            });
+
+            chartEl.style.background = `conic-gradient(${gradients.join(', ')})`;
+            legendEl.innerHTML = legendItems.join('');
+        }
+
+        function renderDashboardBarChart(porPelicula) {
+            const container = document.getElementById('dashboardBarChart');
+            if (!container) return;
+
+            if (!porPelicula.length) {
+                container.innerHTML = '<p style="color:#777;">No hay ventas registradas para mostrar.</p>';
+                return;
+            }
+
+            const topMovies = porPelicula.slice(0, 5); // Top 5 películas
+            const maxBoletos = Math.max(...topMovies.map(row => Number(row.boletosVendidos || 0)), 1);
+
+            container.innerHTML = topMovies.map((movie, idx) => {
+                const boletos = Number(movie.boletosVendidos || 0);
+                const width = Math.round((boletos / maxBoletos) * 100);
+                const colors = ['#38a169', '#3182ce', '#e53e3e', '#d69e2e', '#805ad5'];
+
+                return `
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; color:#2c5b4f; margin-bottom:6px; font-size:13px;">
+                            <span>${movie.pelicula}</span>
+                            <span>${boletos.toLocaleString('es-MX')} boletos</span>
+                        </div>
+                        <div style="background:#d7f1ea; border-radius:999px; overflow:hidden; height:18px;">
+                            <div style="width:${width}%; background:${colors[idx]}; height:100%; transition:width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadDashWallet() {
+            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+            document.getElementById('dashSaldo').textContent = Number(usuario.saldo || 0).toFixed(2);
+            document.getElementById('dashPuntos').textContent = Number(usuario.puntos || 0);
+        }
+
+// Cargar datos de billetera cuando se abre esa sección
+        document.querySelectorAll('.menu-link').forEach(link => {
+            if (link.dataset.section === 'billetera') {
+                link.addEventListener('click', loadDashWallet);
+            }
+            if (link.dataset.section === 'ventas') {
+                link.addEventListener('click', loadVentasReport);
+            }
+        });
+
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Inicialización
+        window.onload = () => {
+            loadPeliculas();
+            loadFunciones();
+            loadMoviesForAvailability();
+        };
+    </script>
+</body>
+</html>
